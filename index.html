@@ -1,159 +1,89 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="km">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
 <title>TRANSLAT KHMER NEW PRO</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#101827;color:white;font-family:Arial,sans-serif}
-header{background:linear-gradient(135deg,#0756d9,#722be7);padding:25px 15px;text-align:center}
-header h1{font-size:23px;margin:5px}
-header p{margin:8px 0}
-.container{padding:16px;max-width:650px;margin:auto}
-.card{background:#1e293b;padding:17px;border-radius:14px;margin:14px 0}
-h3{color:#65b5ff;margin-top:0}
-label{display:block;margin:12px 0 6px}
-textarea,select,input{width:100%;padding:12px;border-radius:9px;border:1px solid #475569;background:#0f172a;color:white;font-size:16px}
-textarea{min-height:110px;resize:vertical}
-button{border:0;border-radius:9px;padding:13px;margin-top:12px;background:#1677ff;color:white;font-size:16px;font-weight:bold;width:100%}
-button:active{opacity:.7}
-.green{background:#059669}
-.purple{background:#7c3aed}
-video{width:100%;margin-top:12px;border-radius:10px}
-#status{color:#facc15;margin-top:12px}
-footer{text-align:center;color:#94a3b8;padding:20px}
-</style>
-</head>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1220;color:#f8fafc;font-family:system-ui,-apple-system,"Noto Sans Khmer",Arial,sans-serif}
+header{padding:28px 16px 24px;text-align:center;background:linear-gradient(135deg,#0756d9,#722be7);border-radius:0 0 24px 24px}
+header h1{font-size:22px;margin:0 0 8px}header p{margin:0;color:#e0e7ff;font-size:14px}
+main{max-width:680px;margin:auto;padding:14px}.card{background:#172337;border:1px solid #293951;border-radius:16px;padding:17px;margin:14px 0}
+h2{font-size:17px;color:#7dd3fc;margin:0 0 14px}label{display:block;font-size:14px;margin:12px 0 6px;color:#dbeafe}
+textarea,select,input[type=text],input[type=password]{width:100%;padding:12px;border-radius:10px;border:1px solid #40516a;background:#0c1728;color:white;font:inherit;font-size:15px}
+textarea{min-height:110px;resize:vertical}button{width:100%;border:0;border-radius:10px;padding:13px;margin-top:10px;background:#2563eb;color:white;font-size:15px;font-weight:700}
+button.green{background:#059669}button.purple{background:#7c3aed}button.gray{background:#475569}
+button:disabled{opacity:.55}video{width:100%;margin-top:12px;border-radius:10px;background:#000}
+#status{color:#facc15;min-height:22px;font-size:14px}.hint{font-size:12px;color:#9fb0c7;line-height:1.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+footer{text-align:center;color:#8192aa;font-size:12px;padding:22px}
+</style></head>
 <body>
-
-<header>
-<h1>🌐 TRANSLAT KHMER NEW PRO</h1>
-<p>កម្មវិធីបកប្រែភាសា និងវីដេអូជាភាសាខ្មែរ</p>
-</header>
-
-<div class="container">
-
-<div class="card">
-<h3>📝 ១. បកប្រែភាសា</h3>
-<label>ជ្រើសរើសភាសាដើម</label>
+<header><h1>🌐 TRANSLAT KHMER NEW PRO</h1><p>កម្មវិធីបកប្រែភាសា និងរៀបចំចំណងជើងរងជាភាសាខ្មែរ</p></header>
+<main>
+<section class="card">
+<h2>📝 ១. បកប្រែអត្ថបទទៅជាភាសាខ្មែរ</h2>
+<label for="source">ជ្រើសរើសភាសាដើម</label>
 <select id="source">
-<option value="en">English</option>
-<option value="th">Thai</option>
-<option value="zh-CN">Chinese</option>
-<option value="vi">Vietnamese</option>
-<option value="fr">French</option>
-<option value="ja">Japanese</option>
-<option value="ko">Korean</option>
-<option value="lo">Lao</option>
+<option value="en">English</option><option value="th">Thai</option><option value="zh-CN">Chinese</option><option value="ko">Korean</option><option value="ja">Japanese</option><option value="vi">Vietnamese</option><option value="fr">French</option><option value="lo">Lao</option><option value="id">Indonesian</option><option value="km">Khmer</option>
 </select>
-
-<label>បញ្ចូលអត្ថបទដែលចង់បកប្រែ</label>
-<textarea id="original" placeholder="សរសេរអត្ថបទនៅទីនេះ..."></textarea>
-
-<button onclick="translateText()">🔄 បកប្រែទៅជាភាសាខ្មែរ</button>
-
-<label>លទ្ធផលភាសាខ្មែរ</label>
-<textarea id="result" placeholder="លទ្ធផលបកប្រែនឹងបង្ហាញនៅទីនេះ"></textarea>
-
-<button class="green" onclick="speak()">🔊 ស្តាប់សំឡេងខ្មែរ</button>
-<button class="purple" onclick="copyResult()">📋 ចម្លងអត្ថបទ</button>
-<p id="status"></p>
-</div>
-
-<div class="card">
-<h3>🎬 ២. ជ្រើសរើសវីដេអូ</h3>
-<input type="file" id="videoFile" accept="video/*">
-<video id="video" controls style="display:none"></video>
-<p>ជ្រើសរើសវីដេអូពីទូរស័ព្ទរបស់អ្នក។</p>
-</div>
-
-<div class="card">
-<h3>💬 ៣. បង្កើតចំណងជើងរង SRT</h3>
-<label>អត្ថបទចំណងជើងរងជាភាសាខ្មែរ</label>
-<textarea id="subtitle" placeholder="បញ្ចូលអត្ថបទចំណងជើងរង..."></textarea>
+<label for="original">អត្ថបទដែលចង់បកប្រែ</label><textarea id="original" placeholder="សរសេរ ឬបិទភ្ជាប់អត្ថបទនៅទីនេះ..."></textarea>
+<button id="translateBtn" onclick="translateText()">🔄 បកប្រែទៅជាភាសាខ្មែរ</button>
+<label for="result">លទ្ធផលបកប្រែ</label><textarea id="result" placeholder="លទ្ធផលនឹងបង្ហាញនៅទីនេះ..."></textarea>
+<div class="row"><button class="green" onclick="speakResult()">🔊 ស្តាប់សំឡេង</button><button class="purple" onclick="copyResult()">📋 ចម្លងអត្ថបទ</button></div>
+<p class="hint">ការបកប្រែឥតគិតថ្លៃប្រើសេវា MyMemory តាមអ៊ីនធឺណិត។ មិនចាំបាច់មាន API Key សម្រាប់មុខងារនេះទេ។</p>
+<p id="status" role="status" aria-live="polite"></p>
+</section>
+<section class="card">
+<h2>🔐 ២. កន្លែងដាក់ API Key (ស្រេចចិត្ត)</h2>
+<label for="apiKey">API Key</label><input id="apiKey" type="password" placeholder="បញ្ចូល API Key នៅពេលអ្នកមាន">
+<div class="row"><button class="green" onclick="saveKey()">💾 រក្សាទុក Key</button><button class="gray" onclick="clearKey()">លុប Key</button></div>
+<p id="keyStatus" class="hint">មិនទាន់មាន Key ក៏អាចប្រើការបកប្រែឥតគិតថ្លៃបានដែរ។ Key នេះត្រូវបានរក្សាទុកក្នុងទូរស័ព្ទប៉ុណ្ណោះ ហើយមិនទាន់ភ្ជាប់ទៅសេវា AI ណាមួយទេ។</p>
+</section>
+<section class="card">
+<h2>🎬 ៣. ជ្រើសរើស និងមើលវីដេអូ</h2>
+<label for="videoFile">ជ្រើសរើសវីដេអូពីទូរស័ព្ទ</label><input type="file" id="videoFile" accept="video/*">
+<video id="video" controls playsinline style="display:none"></video>
+<p class="hint">កំណែនេះអាចជ្រើសរើស និងមើលវីដេអូបាន។ ការស្គាល់សំឡេងក្នុងវីដេអូដោយស្វ័យប្រវត្តិ និងបញ្ចូលសំឡេងខ្មែរទៅក្នុង MP4 មិនទាន់មាននៅក្នុងកំណែនេះទេ។</p>
+</section>
+<section class="card">
+<h2>💬 ៤. បង្កើតចំណងជើងរង SRT</h2>
+<label for="subtitle">អត្ថបទចំណងជើងរងជាភាសាខ្មែរ (មួយបន្ទាត់ក្នុងមួយឃ្លា)</label>
+<textarea id="subtitle" placeholder="បញ្ចូលអត្ថបទខ្មែរដែលចង់ធ្វើជាចំណងជើងរង..."></textarea>
 <button class="green" onclick="makeSRT()">⬇️ ទាញយកឯកសារ SRT</button>
-</div>
-
-<div class="card">
-<h3>🔊 ៤. សំឡេងអានភាសាខ្មែរ</h3>
+</section>
+<section class="card">
+<h2>🔊 ៥. សាកស្តាប់សំឡេងភាសាខ្មែរ</h2>
 <textarea id="voiceText" placeholder="បញ្ចូលអត្ថបទខ្មែរ..."></textarea>
-<button onclick="speakVoice()">▶️ ចាប់ផ្តើមអាន</button>
-<button class="purple" onclick="speechSynthesis.cancel()">⏹ បញ្ឈប់សំឡេង</button>
-</div>
-
-</div>
-
-<footer>
-TRANSLAT KHMER NEW PRO<br>
-Version 1.0 | Khmer Language App
-</footer>
-
+<div class="row"><button onclick="speakVoice()">▶️ អានអត្ថបទ</button><button class="gray" onclick="stopVoice()">⏹ បញ្ឈប់</button></div>
+<p class="hint">សំឡេងអានអាស្រ័យលើភាសាដែល Android របស់អ្នកបានដំឡើង។</p>
+</section>
+</main>
+<footer>TRANSLAT KHMER NEW PRO · Version 1.3 · Free starter</footer>
 <script>
+const $=id=>document.getElementById(id);
 async function translateText(){
- const text=document.getElementById('original').value.trim();
- const lang=document.getElementById('source').value;
- const status=document.getElementById('status');
- if(!text){status.textContent='សូមបញ្ចូលអត្ថបទជាមុន';return;}
- status.textContent='កំពុងបកប្រែ...';
+ const input=$('original').value.trim(),lang=$('source').value,status=$('status'),btn=$('translateBtn');
+ if(!input){status.textContent='សូមបញ្ចូលអត្ថបទជាមុន។';return;}
+ if(lang==='km'){$('result').value=input;status.textContent='បានចម្លងអត្ថបទខ្មែរ។';return;}
+ btn.disabled=true;status.textContent='កំពុងបកប្រែ...';
  try{
-  const url='https://api.mymemory.translated.net/get?q='+
-  encodeURIComponent(text)+'&langpair='+lang+'|km';
-  const response=await fetch(url);
-  const data=await response.json();
-  if(data.responseStatus!==200)throw Error('Translation failed');
-  document.getElementById('result').value=data.responseData.translatedText;
-  document.getElementById('subtitle').value=data.responseData.translatedText;
-  document.getElementById('voiceText').value=data.responseData.translatedText;
-  status.textContent='បកប្រែបានជោគជ័យ!';
- }catch(e){
-  status.textContent='មិនអាចបកប្រែបានទេ។ សូមពិនិត្យអ៊ីនធឺណិត ហើយសាកល្បងម្ដងទៀត។';
- }
+  const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(input)+'&langpair='+encodeURIComponent(lang+'|km');
+  const response=await fetch(url);if(!response.ok)throw new Error('Network error');
+  const data=await response.json();if(data.responseStatus!==200||!data.responseData?.translatedText)throw new Error('Translation unavailable');
+  const translated=data.responseData.translatedText;
+  $('result').value=translated;$('subtitle').value=translated;$('voiceText').value=translated;
+  status.textContent='បកប្រែបានជោគជ័យ។';
+ }catch(e){status.textContent='បកប្រែមិនបានទេ។ សូមពិនិត្យអ៊ីនធឺណិត ឬសាកល្បងម្ដងទៀត។';}
+ finally{btn.disabled=false;}
 }
-function speak(){
- const t=document.getElementById('result').value;
- readKhmer(t);
-}
-function speakVoice(){
- const t=document.getElementById('voiceText').value;
- readKhmer(t);
-}
-function readKhmer(t){
- if(!t.trim()){alert('សូមបញ្ចូលអត្ថបទជាមុន');return;}
- speechSynthesis.cancel();
- const u=new SpeechSynthesisUtterance(t);
- u.lang='km-KH';
- u.rate=0.85;
- speechSynthesis.speak(u);
-}
-function copyResult(){
- const t=document.getElementById('result').value;
- if(!t){alert('មិនទាន់មានអត្ថបទទេ');return;}
- navigator.clipboard.writeText(t).then(()=>alert('ចម្លងបានជោគជ័យ'));
-}
-document.getElementById('videoFile').addEventListener('change',function(){
- const f=this.files[0];
- if(!f)return;
- const v=document.getElementById('video');
- v.src=URL.createObjectURL(f);
- v.style.display='block';
-});
-function makeSRT(){
- const t=document.getElementById('subtitle').value.trim();
- if(!t){alert('សូមបញ្ចូលអត្ថបទជាមុន');return;}
- const lines=t.split(/\n+/);
- let srt='';
- lines.forEach((line,i)=>{
-  srt+=(i+1)+'\n00:00:'+String(i*4).padStart(2,'0')+',000 --> 00:00:'+String(i*4+4).padStart(2,'0')+',000\n'+line+'\n\n';
- });
- const blob=new Blob(['\uFEFF'+srt],{type:'text/plain;charset=utf-8'});
- const a=document.createElement('a');
- a.href=URL.createObjectURL(blob);
- a.download='TRANSLAT-KHMER.srt';
- a.click();
- URL.revokeObjectURL(a.href);
-}
-</script>
-</body>
-</html>
+function saveKey(){const k=$('apiKey').value.trim();if(!k){$('keyStatus').textContent='សូមបញ្ចូល Key ជាមុន ឬទុកទទេក៏បាន។';return;}try{localStorage.setItem('tk_new_pro_api_key',k);$('apiKey').value='';$('keyStatus').textContent='បានរក្សាទុក Key ក្នុងទូរស័ព្ទ។ Key មិនទាន់ត្រូវបានប្រើដោយមុខងារណាមួយទេ។';}catch(e){$('keyStatus').textContent='មិនអាចរក្សាទុក Key បានទេ។';}}
+function clearKey(){localStorage.removeItem('tk_new_pro_api_key');$('apiKey').value='';$('keyStatus').textContent='បានលុប Key ដែលរក្សាទុកក្នុងទូរស័ព្ទ។';}
+function readKhmer(t){if(!t.trim()){alert('សូមបញ្ចូលអត្ថបទជាមុន');return;}if(!('speechSynthesis'in window)){alert('ទូរស័ព្ទនេះមិនគាំទ្រសំឡេងអានទេ។');return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='km-KH';u.rate=.85;speechSynthesis.speak(u);}
+function speakResult(){readKhmer($('result').value)}
+function speakVoice(){readKhmer($('voiceText').value)}
+function stopVoice(){if('speechSynthesis'in window)speechSynthesis.cancel()}
+async function copyResult(){const t=$('result').value;if(!t){alert('មិនទាន់មានអត្ថបទទេ');return;}try{await navigator.clipboard.writeText(t);alert('ចម្លងបានជោគជ័យ');}catch(e){$('result').select();document.execCommand('copy');alert('បានចម្លងអត្ថបទ');}}
+$('videoFile').addEventListener('change',function(){const f=this.files?.[0];if(!f)return;const v=$('video');if(v.src)URL.revokeObjectURL(v.src);v.src=URL.createObjectURL(f);v.style.display='block';v.load();});
+function stamp(seconds){const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=Math.floor(seconds%60),ms=Math.round((seconds-Math.floor(seconds))*1000);return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+','+String(ms).padStart(3,'0');}
+function makeSRT(){const lines=$('subtitle').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);if(!lines.length){alert('សូមបញ្ចូលអត្ថបទចំណងជើងរងជាមុន');return;}let srt=lines.map((line,i)=>(i+1)+'\n'+stamp(i*4)+' --> '+stamp((i+1)*4)+'\n'+line).join('\n\n')+'\n';const blob=new Blob(['\uFEFF'+srt],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='TRANSLAT-KHMER.srt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+</script></body></html>
