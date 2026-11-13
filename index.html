@@ -24,6 +24,7 @@ video{display:block;width:100%;height:100%;object-fit:contain;border-radius:17px
 .video-timeline{display:flex;align-items:center;gap:9px;padding:12px 3px 0;font-size:12px;color:#d7e0e6;font-weight:700}.video-timeline input{flex:1;min-width:0;accent-color:var(--mint)}.video-run{margin-top:13px!important;background:linear-gradient(100deg,#30219a,#21156f)!important;color:#fff!important;border-radius:24px!important;min-height:52px;box-shadow:0 5px 15px #09072d}
 .switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 2px;border-bottom:1px solid #493b56}.switch-row label{margin:0;line-height:1.5}.switch-row input{width:48px;height:26px;accent-color:var(--mint)}
 .bottom-nav{position:fixed;z-index:10;bottom:12px;left:50%;transform:translateX(-50%);width:min(92%,590px);display:flex;align-items:center;justify-content:space-around;gap:6px;padding:8px 10px;border-radius:35px;background:#101521ee;border:1px solid #8b8a9a;box-shadow:0 0 0 4px #080b13,0 0 22px #7864ff66;backdrop-filter:blur(12px)}.bottom-nav button{width:auto;min-width:40px;margin:0;padding:10px 12px;background:transparent;color:#f2f3fa;border:0;border-radius:25px;font-size:18px}.bottom-nav button.active{background:var(--mint);color:#073b36;font-size:14px;padding:12px 17px}
+.progress-panel{display:none;margin-top:14px;padding:13px;border:1px solid #52716e;border-radius:15px;background:#0d1a20}.progress-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px}.progress-number{font-size:22px;font-weight:900;color:var(--mint);font-variant-numeric:tabular-nums}.progress-track{height:12px;background:#29353d;border-radius:99px;overflow:hidden;margin:10px 0 7px}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#17bda5,#50f3d1);border-radius:99px;transition:width .15s}.progress-note{font-size:12px;color:var(--muted);line-height:1.6}.auto-row{display:flex;align-items:center;gap:9px;margin-top:10px;color:#e7edf2;font-size:13px}.auto-row input{width:19px;height:19px;accent-color:var(--mint)}
 @media(max-width:420px){header{padding:13px 14px}.brand h1{font-size:14px}main{padding:3px 10px 100px}.card{padding:13px}.video-card{padding:12px 10px 15px}.video-layout{grid-template-columns:58px minmax(0,1fr);gap:9px}.video-actions button{font-size:19px;min-height:57px}.preview-placeholder{font-size:15px}.bottom-nav{bottom:9px}}
 </style></head>
 <body>
@@ -63,6 +64,8 @@ video{display:block;width:100%;height:100%;object-fit:contain;border-radius:17px
 <div class="video-timeline"><span id="videoCurrent">0:00</span><input id="videoSeek" type="range" min="0" max="100" value="0"><span id="videoDuration">0:00</span></div>
 </div></div>
 <button id="videoTranslateBtn" class="video-run" type="button" onclick="translateVideo()">🌐 បកប្រែសំឡេងវីដេអូជាខ្មែរ</button>
+<div class="auto-row"><input id="autoTranslateToggle" type="checkbox" checked><label for="autoTranslateToggle" style="margin:0">ចាប់ផ្ដើមបកប្រែស្វ័យប្រវត្តិ ពេលជ្រើសរើសវីដេអូ</label></div>
+<div id="progressPanel" class="progress-panel" aria-live="polite"><div class="progress-head"><strong id="progressLabel">កំពុងផ្ញើវីដេអូ...</strong><span id="progressPercent" class="progress-number">0%</span></div><div class="progress-track"><div id="progressFill" class="progress-fill"></div></div><div id="progressNote" class="progress-note">ភាគរយនេះបង្ហាញការផ្ញើវីដេអូទៅម៉ាស៊ីនមេ។</div></div>
 <div class="switch-row"><label for="videoSubtitleToggle">បង្ហាញចំណងជើងរង (Subtitle)</label><input id="videoSubtitleToggle" type="checkbox" checked></div>
 <div class="switch-row"><label for="videoKhmerVoiceToggle">បើកសំឡេងអានជាភាសាខ្មែរ</label><input id="videoKhmerVoiceToggle" type="checkbox"></div>
 <label for="videoSource">ជ្រើសរើសភាសាដើមក្នុងវីដេអូ</label><select id="videoSource"><option value="en">English</option><option value="th">Thai</option><option value="zh">Chinese</option><option value="ko">Korean</option><option value="ja">Japanese</option><option value="vi">Vietnamese</option><option value="fr">French</option><option value="lo">Lao</option><option value="id">Indonesian</option><option value="auto">ស្គាល់ភាសាដោយស្វ័យប្រវត្តិ</option></select>
@@ -119,7 +122,14 @@ function loadSettings(){
  $('backendUrl').value=localStorage.getItem('tk_new_pro_backend_url')||'';
  if(localStorage.getItem('tk_new_pro_api_key')) $('keyStatus').textContent='មាន API Key រក្សាទុកក្នុងទូរស័ព្ទរួចហើយ។';
 }
-async function translateVideo(){
+function updateVideoProgress(percent,label,note){
+ const panel=$('progressPanel');panel.style.display='block';
+ const p=Math.max(0,Math.min(100,Math.round(percent)));
+ $('progressPercent').textContent=p+'%';$('progressFill').style.width=p+'%';
+ if(label)$('progressLabel').textContent=label;
+ if(note)$('progressNote').textContent=note;
+}
+function translateVideo(){
  const file=$('videoFile').files?.[0];
  const key=localStorage.getItem('tk_new_pro_api_key');
  const backend=(localStorage.getItem('tk_new_pro_backend_url')||'').replace(/\/+$/,'');
@@ -128,23 +138,25 @@ async function translateVideo(){
  if(!key){status.textContent='សូមបញ្ចូល និងរក្សាទុក Gemini API Key ជាមុន។';return;}
  if(!backend||!/^https:\/\//i.test(backend)){status.textContent='សូមបញ្ចូល Backend URL ដែលចាប់ផ្តើមដោយ https:// រួចរក្សាទុក។';return;}
  const form=new FormData();form.append('video',file);form.append('source_language',$('videoSource').value);
- btn.disabled=true;status.textContent='កំពុងផ្ញើវីដេអូ និងបកប្រែ... សូមរង់ចាំ។';
- try{
-  const res=await fetch(backend+'/translate-video',{method:'POST',headers:{'X-Gemini-API-Key':key},body:form});
-  const data=await res.json();
-  if(!res.ok||!data.success)throw new Error(data.error||'បកប្រែមិនបានទេ។');
-  const result=(data.translation_result||'').replace(/^```(?:srt)?\\s*/i,'').replace(/\\s*```$/,'').trim();
-  $('subtitle').value=result;$('result').value=result;$('voiceText').value=result;
-  status.textContent='បកប្រែបានជោគជ័យ! អត្ថបទខ្មែរត្រូវបានដាក់ក្នុងផ្នែកចំណងជើងរង។ អ្នកអាចទាញយក SRT ខាងក្រោមបាន។';
- }catch(e){status.textContent='មានបញ្ហា៖ '+(e.message||'សូមពិនិត្យ Backend URL, API Key និងអ៊ីនធឺណិត។');}
- finally{btn.disabled=false;}
+ btn.disabled=true;status.textContent='កំពុងចាប់ផ្ដើមបកប្រែ...';
+ updateVideoProgress(0,'កំពុងផ្ញើវីដេអូទៅម៉ាស៊ីនមេ','ភាគរយនេះជាភាគរយផ្ញើឯកសារពិត។ បន្ទាប់ពីផ្ញើរួច ម៉ាស៊ីនមេនឹងដំណើរការបកប្រែ។');
+ const xhr=new XMLHttpRequest();xhr.open('POST',backend+'/translate-video');xhr.setRequestHeader('X-Gemini-API-Key',key);
+ xhr.upload.onprogress=function(e){if(e.lengthComputable){const p=e.total?e.loaded/e.total*100:0;updateVideoProgress(p,'កំពុងផ្ញើវីដេអូទៅម៉ាស៊ីនមេ','បានផ្ញើ '+Math.round(p)+'% នៃឯកសារវីដេអូ។');}};
+ xhr.upload.onload=function(){updateVideoProgress(100,'បានផ្ញើវីដេអូ 100%','វីដេអូបានផ្ញើរួច។ កំពុងរង់ចាំម៉ាស៊ីនមេបញ្ចប់ការស្គាល់សំឡេង និងបកប្រែ។ ភាគរយដំណើរការខាងក្នុងត្រូវការ Backend ផ្ញើស្ថានភាពមកវិញ។');status.textContent='កំពុងបកប្រែនៅម៉ាស៊ីនមេ... សូមរង់ចាំ។';};
+ xhr.onload=function(){let data={};try{data=JSON.parse(xhr.responseText||'{}');}catch(e){status.textContent='ម៉ាស៊ីនមេបានផ្ញើលទ្ធផលមិនត្រឹមត្រូវ។';btn.disabled=false;return;}
+ if(xhr.status<200||xhr.status>=300||!data.success){status.textContent='មានបញ្ហា៖ '+(data.error||'បកប្រែមិនបានទេ។ HTTP '+xhr.status);$('progressLabel').textContent='បកប្រែមិនបានជោគជ័យ';$('progressNote').textContent='សូមពិនិត្យ Backend URL, API Key និងម៉ាស៊ីនមេ រួចសាកល្បងម្ដងទៀត។';btn.disabled=false;return;}
+ const tick=String.fromCharCode(96).repeat(3);const result=(data.translation_result||'').replace(new RegExp('^'+tick+'(?:srt)?\\s*','i'),'').replace(new RegExp('\\s*'+tick+'$'),'').trim();
+ $('subtitle').value=result;$('result').value=result;$('voiceText').value=result;$('progressLabel').textContent='បកប្រែបានជោគជ័យ';$('progressPercent').textContent='100%';$('progressNote').textContent='ម៉ាស៊ីនមេបានបញ្ចប់ការបកប្រែ។ អ្នកអាចទាញយកឯកសារ SRT ខាងក្រោមបាន។';status.textContent='បកប្រែបានជោគជ័យ! អត្ថបទខ្មែរត្រូវបានដាក់ក្នុងផ្នែកចំណងជើងរង។';btn.disabled=false;
+ };
+ xhr.onerror=function(){status.textContent='មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ។ សូមពិនិត្យអ៊ីនធឺណិត និង Backend URL។';$('progressLabel').textContent='ការភ្ជាប់មានបញ្ហា';$('progressNote').textContent='សូមសាកល្បងម្ដងទៀត។';btn.disabled=false;};
+ xhr.ontimeout=function(){status.textContent='ម៉ាស៊ីនមេចំណាយពេលយូរពេក។ សូមសាកល្បងម្ដងទៀត។';btn.disabled=false;};xhr.timeout=15*60*1000;xhr.send(form);
 }
 function readKhmer(t){if(!t.trim()){alert('សូមបញ្ចូលអត្ថបទជាមុន');return;}if(!('speechSynthesis'in window)){alert('ទូរស័ព្ទនេះមិនគាំទ្រសំឡេងអានទេ។');return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='km-KH';u.rate=.85;speechSynthesis.speak(u);}
 function speakResult(){readKhmer($('result').value)}
 function speakVoice(){readKhmer($('voiceText').value)}
 function stopVoice(){if('speechSynthesis'in window)speechSynthesis.cancel()}
 async function copyResult(){const t=$('result').value;if(!t){alert('មិនទាន់មានអត្ថបទទេ');return;}try{await navigator.clipboard.writeText(t);alert('ចម្លងបានជោគជ័យ');}catch(e){$('result').select();document.execCommand('copy');alert('បានចម្លងអត្ថបទ');}}
-$('videoFile').addEventListener('change',function(){const f=this.files?.[0];if(!f)return;const v=$('video');if(v.src)URL.revokeObjectURL(v.src);v.src=URL.createObjectURL(f);v.style.display='block';$('previewPlaceholder').style.display='none';v.load();});
+$('videoFile').addEventListener('change',function(){const f=this.files?.[0];if(!f)return;const v=$('video');if(v.src)URL.revokeObjectURL(v.src);v.src=URL.createObjectURL(f);v.style.display='block';$('previewPlaceholder').style.display='none';v.load();if($('autoTranslateToggle').checked){setTimeout(()=>translateVideo(),250);}});
 function fmtTime(seconds){if(!Number.isFinite(seconds))return '0:00';const m=Math.floor(seconds/60),s=Math.floor(seconds%60);return m+':'+String(s).padStart(2,'0');}
 $('video').addEventListener('loadedmetadata',()=>{$('videoDuration').textContent=fmtTime($('video').duration);$('videoSeek').max=$('video').duration||100;});
 $('video').addEventListener('timeupdate',()=>{$('videoCurrent').textContent=fmtTime($('video').currentTime);$('videoSeek').value=$('video').currentTime;});
