@@ -1,11 +1,5 @@
-
-import type { CapacitorConfig } from '@capacitor/cli';
-
-const config: CapacitorConfig = {
-  appId: 'com.translatkhmer.newpro',
-  appName: 'TRANSLAT KHMER NEW PRO',
-  webDir: 'dist',
-  bundledWebRuntime: false
-};
-
-export default config;
+{
+  "appId": "com.translatkhmer.newpro",
+  "appName": "TRANSLAT KHMER NEW PRO",
+  "webDir": "dist"
+}
