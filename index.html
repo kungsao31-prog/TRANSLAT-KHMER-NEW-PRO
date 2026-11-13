@@ -5,28 +5,29 @@
 <meta name="theme-color" content="#101827">
 <title>TRANSLAT KHMER NEW PRO</title>
 <style>
-:root{color-scheme:dark;--bg:#171326;--panel:#292039;--line:#514361;--mint:#08d6b5;--white:#f7f1fb;--muted:#c1b5cb}
+:root{color-scheme:dark;--mint:#50f3d1;--white:#f4f6ff;--muted:#aab8c1}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:radial-gradient(ellipse at top,#302044 0%,#191427 48%,#11101c 100%);color:var(--white);font-family:system-ui,-apple-system,"Noto Sans Khmer",Arial,sans-serif}
-header{padding:20px 16px 16px;text-align:center;background:linear-gradient(135deg,#302044,#21172f);border-bottom:1px solid #493654;border-radius:0 0 24px 24px;box-shadow:0 8px 24px #08061066}
-header h1{font-size:21px;margin:0 0 7px;color:#fff}header p{margin:0;color:#d5c9df;font-size:13px}
-main{max-width:760px;margin:auto;padding:12px}.card{background:linear-gradient(155deg,#30243e,#241d32);border:1px solid var(--line);border-radius:20px;padding:16px;margin:13px 0;box-shadow:0 8px 22px #08061055}
-h2{font-size:16px;color:var(--mint);margin:0 0 13px}label{display:block;font-size:14px;margin:12px 0 6px;color:#e7ddec}
-textarea,select,input[type=text],input[type=password]{width:100%;padding:12px;border-radius:12px;border:1px solid #665573;background:#191526;color:white;font:inherit;font-size:15px}
-textarea{min-height:110px;resize:vertical}button{width:100%;border:1px solid transparent;border-radius:13px;padding:13px;margin-top:10px;background:var(--mint);color:#082b29;font-size:15px;font-weight:800}
-button.green{background:var(--mint);color:#082b29}button.purple{background:#49345d;color:#fff;border-color:#76628a}button.gray{background:#393047;color:#fff;border-color:#665573}button:disabled{opacity:.55}
-video{width:100%;margin-top:10px;border-radius:14px;background:#000;max-height:340px}
-#status{color:#8df5df;min-height:22px;font-size:14px}.hint{font-size:12px;color:var(--muted);line-height:1.7}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-footer{text-align:center;color:#9b8ca8;font-size:12px;padding:22px}
-.video-layout{display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:10px;align-items:start}.video-screen{min-width:0;background:#11101b;border:1px solid #665573;border-radius:16px;padding:8px}
-.video-actions{display:flex;flex-direction:column;gap:7px}.video-actions button{margin:0;min-height:66px;padding:8px 5px;font-size:12px;border-radius:14px}
-.pick-video{display:block;text-align:center;padding:13px 8px;border-radius:12px;background:#08d6b5;color:#082b29;font-weight:800;font-size:14px;cursor:pointer}
-#videoFile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,#29203d 0%,#111522 42%,#080b13 100%);color:var(--white);font-family:system-ui,-apple-system,"Noto Sans Khmer",Arial,sans-serif;min-height:100vh}
+header{max-width:720px;margin:0 auto;padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}.brand-mark{width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(145deg,#d93cff,#4c4bff 60%,#09d9c0);box-shadow:0 0 22px #8d45ff77;font-size:23px}.brand h1{font-size:16px;line-height:1.25;margin:0}.brand p{font-size:11px;color:#bdb3ce;margin:4px 0 0}.header-pill{border:1px solid #65717e;background:#171a2b;border-radius:22px;padding:10px 17px;color:var(--mint);font-size:18px;box-shadow:0 0 16px #5a5bff55}
+main{max-width:720px;margin:auto;padding:4px 14px 105px}.card{background:linear-gradient(155deg,#19252b,#17202a 60%,#1b1b2d);border:1px solid #536066;border-radius:24px;padding:17px;margin:13px 0;box-shadow:0 12px 30px #0008}
+h2{font-size:16px;color:var(--mint);margin:0 0 13px}label{display:block;font-size:14px;margin:12px 0 6px;color:#e7edf2}
+textarea,select,input[type=text],input[type=password]{width:100%;padding:12px;border-radius:12px;border:1px solid #586873;background:#101722;color:white;font:inherit;font-size:15px}textarea{min-height:110px;resize:vertical}
+button{width:100%;border:1px solid transparent;border-radius:14px;padding:13px;margin-top:10px;background:var(--mint);color:#082b29;font-size:15px;font-weight:800}button.green{background:linear-gradient(100deg,#49f1cb,#13c7b2);color:#082b29}button.purple{background:#30218f;color:#fff;border-color:#5e56c8}button.gray{background:#303b43;color:#fff;border-color:#66747c}button:disabled{opacity:.55}
+video{display:block;width:100%;height:100%;object-fit:contain;border-radius:17px;background:#050711;max-height:unset;margin:0}
+#status{color:#8df5df;min-height:22px;font-size:14px}.hint{font-size:12px;color:var(--muted);line-height:1.7}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}footer{text-align:center;color:#9b8ca8;font-size:12px;padding:22px}
+.video-card{padding:15px 13px 18px;border-radius:30px;background:linear-gradient(145deg,#202a2c,#151d29 55%,#1e1a30);border:1px solid #687277;box-shadow:0 0 0 5px #080d17,0 0 25px #28d8c055}
+.video-toolbar{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:0 0 12px}.video-toolbar button{margin:0;padding:8px 3px;min-height:44px;border-radius:13px;background:#253541;color:#c9fff5;border:1px solid #64727a;font-size:17px}.video-toolbar button:nth-child(2){background:#302444}.video-toolbar button:nth-child(3){background:#263d50}.video-toolbar button:nth-child(4),.video-toolbar button:nth-child(5){background:#087f70;border-color:#41f2d0}
+.video-layout{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:stretch}.video-actions{display:flex;flex-direction:column;gap:10px;padding-top:3px}.video-actions button{margin:0;min-height:65px;padding:7px 3px;font-size:22px;border-radius:17px;background:#17242b;color:var(--mint);border:1px solid #a1aaa9}
+.video-screen{min-width:0;background:#0b0d19;border:2px solid #27e6d0;border-radius:22px;padding:0;overflow:hidden;aspect-ratio:9/16;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 0 13px #1adac044}.video-screen video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.preview-placeholder{padding:18px;text-align:center;color:#c9b8f2;font-weight:800;font-size:17px;line-height:1.7}
+.pick-video{display:block;text-align:center;padding:13px 8px;border-radius:12px;background:#08d6b5;color:#082b29;font-weight:800;font-size:14px;cursor:pointer;margin:12px 0 0}#videoFile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.video-timeline{display:flex;align-items:center;gap:9px;padding:12px 3px 0;font-size:12px;color:#d7e0e6;font-weight:700}.video-timeline input{flex:1;min-width:0;accent-color:var(--mint)}.video-run{margin-top:13px!important;background:linear-gradient(100deg,#30219a,#21156f)!important;color:#fff!important;border-radius:24px!important;min-height:52px;box-shadow:0 5px 15px #09072d}
 .switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 2px;border-bottom:1px solid #493b56}.switch-row label{margin:0;line-height:1.5}.switch-row input{width:48px;height:26px;accent-color:var(--mint)}
-@media(max-width:420px){main{padding:9px}.card{padding:13px}.video-layout{grid-template-columns:minmax(0,1fr) 88px}.video-actions button{font-size:11px;min-height:58px}}
+.bottom-nav{position:fixed;z-index:10;bottom:12px;left:50%;transform:translateX(-50%);width:min(92%,590px);display:flex;align-items:center;justify-content:space-around;gap:6px;padding:8px 10px;border-radius:35px;background:#101521ee;border:1px solid #8b8a9a;box-shadow:0 0 0 4px #080b13,0 0 22px #7864ff66;backdrop-filter:blur(12px)}.bottom-nav button{width:auto;min-width:40px;margin:0;padding:10px 12px;background:transparent;color:#f2f3fa;border:0;border-radius:25px;font-size:18px}.bottom-nav button.active{background:var(--mint);color:#073b36;font-size:14px;padding:12px 17px}
+@media(max-width:420px){header{padding:13px 14px}.brand h1{font-size:14px}main{padding:3px 10px 100px}.card{padding:13px}.video-card{padding:12px 10px 15px}.video-layout{grid-template-columns:58px minmax(0,1fr);gap:9px}.video-actions button{font-size:19px;min-height:57px}.preview-placeholder{font-size:15px}.bottom-nav{bottom:9px}}
 </style></head>
 <body>
-<header><h1>🌐 TRANSLAT KHMER NEW PRO</h1><p>កម្មវិធីបកប្រែភាសា និងវីដេអូជាភាសាខ្មែរ</p></header>
+<header><div class="brand"><div class="brand-mark">🌐</div><div><h1>TRANSLAT KHMER NEW PRO</h1><p>កម្មវិធីបកប្រែភាសា និងវីដេអូជាភាសាខ្មែរ</p></div></div><div class="header-pill">⌄</div></header>
 <main>
 <section class="card">
 <h2>📝 ១. បកប្រែអត្ថបទទៅជាភាសាខ្មែរ</h2>
@@ -48,32 +49,25 @@ footer{text-align:center;color:#9b8ca8;font-size:12px;padding:22px}
 <div class="row"><button class="green" onclick="saveKey()">💾 រក្សាទុក</button><button class="gray" onclick="clearKey()">លុប Key</button></div>
 <p id="keyStatus" class="hint">Key នឹងត្រូវប្រើពេលអ្នកចុចបកប្រែវីដេអូ។ ត្រូវដាក់ Backend URL ដែលបាន Deploy រួច។ កុំចែករំលែក API Key ជាមួយអ្នកដទៃ។</p>
 </section>
-<section class="card">
-<h2>🎬 ៣. វីដេអូដើម និងជ្រើសរើសភាសា</h2>
-<div class="video-layout">
-<div class="video-screen">
-<label class="pick-video" for="videoFile">📁 ជ្រើសរើសវីដេអូពីទូរស័ព្ទ</label>
-<input type="file" id="videoFile" accept="video/*">
-<video id="video" controls playsinline style="display:none"></video>
-<p class="hint" id="videoHint">វីដេអូដែលអ្នកជ្រើសរើសនឹងបង្ហាញនៅទីនេះ។</p>
-</div>
-<div class="video-actions">
-<button type="button" class="purple" onclick="document.getElementById('original').scrollIntoView({behavior:'smooth'})">📝 Text</button>
-<button type="button" class="green" onclick="document.getElementById('videoFile').click()">🎞 Pick</button>
-<button type="button" class="gray" onclick="document.getElementById('translateBtn').scrollIntoView({behavior:'smooth'})">🌐 Online</button>
-</div>
-</div>
+<section class="card video-card" id="dubbed">
+<h2>🎬 វីដេអូបកប្រែ · DUBBED</h2>
+<div class="video-toolbar"><button type="button">✦</button><button type="button">🖌</button><button type="button">◉</button><button type="button">▰</button><button type="button">♫</button></div>
+<div class="video-layout"><div class="video-actions">
+<button type="button" onclick="document.getElementById('videoFile').click()">✦</button>
+<button type="button" onclick="document.getElementById('video').play().catch(()=>{})">◉</button>
+<button type="button" onclick="const v=document.getElementById('video');v.currentTime=0">⟳</button>
+<button type="button" onclick="document.getElementById('videoSubtitleToggle').click()">✧</button>
+</div><div>
+<div class="video-screen"><div class="preview-placeholder" id="previewPlaceholder">9:16 Video Preview<br><span style="font-size:13px;font-weight:500">(ជ្រើសរើសវីដេអូដើម្បីមើល Preview)</span></div><video id="video" controls playsinline style="display:none"></video></div>
+<label class="pick-video" for="videoFile">📁 ជ្រើសរើសវីដេអូពីទូរស័ព្ទ</label><input type="file" id="videoFile" accept="video/*">
+<div class="video-timeline"><span id="videoCurrent">0:00</span><input id="videoSeek" type="range" min="0" max="100" value="0"><span id="videoDuration">0:00</span></div>
+</div></div>
+<button id="videoTranslateBtn" class="video-run" type="button" onclick="translateVideo()">🌐 បកប្រែសំឡេងវីដេអូជាខ្មែរ</button>
 <div class="switch-row"><label for="videoSubtitleToggle">បង្ហាញចំណងជើងរង (Subtitle)</label><input id="videoSubtitleToggle" type="checkbox" checked></div>
 <div class="switch-row"><label for="videoKhmerVoiceToggle">បើកសំឡេងអានជាភាសាខ្មែរ</label><input id="videoKhmerVoiceToggle" type="checkbox"></div>
-<label for="videoSource">ជ្រើសរើសភាសាដើមក្នុងវីដេអូ</label>
-<select id="videoSource">
-<option value="en">English</option><option value="th">Thai</option><option value="zh">Chinese</option><option value="ko">Korean</option><option value="ja">Japanese</option><option value="vi">Vietnamese</option><option value="fr">French</option><option value="lo">Lao</option><option value="id">Indonesian</option><option value="auto">ស្គាល់ភាសាដោយស្វ័យប្រវត្តិ</option>
-</select>
-<label for="videoTarget">បកប្រែទៅជាភាសា</label>
-<select id="videoTarget"><option value="km" selected>ភាសាខ្មែរ</option></select>
-<p class="hint">ជ្រើសរើសភាសាដើម រួចចុចប៊ូតុងបកប្រែ។ ត្រូវមានអ៊ីនធឺណិត និងភ្ជាប់ Gemini API Key ជាមួយ Backend URL ជាមុន។</p>
-<button id="videoTranslateBtn" class="green" type="button" onclick="translateVideo()">🌐 បកប្រែសំឡេងវីដេអូជាខ្មែរ</button>
-<p id="videoStatus" class="hint" role="status" aria-live="polite"></p>
+<label for="videoSource">ជ្រើសរើសភាសាដើមក្នុងវីដេអូ</label><select id="videoSource"><option value="en">English</option><option value="th">Thai</option><option value="zh">Chinese</option><option value="ko">Korean</option><option value="ja">Japanese</option><option value="vi">Vietnamese</option><option value="fr">French</option><option value="lo">Lao</option><option value="id">Indonesian</option><option value="auto">ស្គាល់ភាសាដោយស្វ័យប្រវត្តិ</option></select>
+<label for="videoTarget">បកប្រែទៅជាភាសា</label><select id="videoTarget"><option value="km" selected>ភាសាខ្មែរ</option></select>
+<p class="hint">ត្រូវមានអ៊ីនធឺណិត និងភ្ជាប់ Gemini API Key ជាមួយ Backend URL ជាមុន។</p><p id="videoStatus" class="hint" role="status" aria-live="polite"></p>
 </section>
 <section class="card">
 <h2>💬 ៤. បង្កើតចំណងជើងរង SRT</h2>
@@ -88,6 +82,9 @@ footer{text-align:center;color:#9b8ca8;font-size:12px;padding:22px}
 <p class="hint">សំឡេងអានអាស្រ័យលើភាសាដែល Android របស់អ្នកបានដំឡើង។</p>
 </section>
 </main>
+<nav class="bottom-nav" aria-label="ម៉ឺនុយខាងក្រោម">
+<button type="button" onclick="window.scrollTo({top:0,behavior:'smooth'})">⌂</button><button type="button" class="active" onclick="document.getElementById('dubbed').scrollIntoView({behavior:'smooth'})">★ Dubbed</button><button type="button" onclick="document.getElementById('subtitle').scrollIntoView({behavior:'smooth'})">▤</button><button type="button" onclick="document.getElementById('voiceText').scrollIntoView({behavior:'smooth'})">◖))</button><button type="button" onclick="document.getElementById('apiKey').scrollIntoView({behavior:'smooth'})">●</button>
+</nav>
 <footer>TRANSLAT KHMER NEW PRO · Version 1.4 · Language selection</footer>
 <script>
 const $=id=>document.getElementById(id);\nloadSettings();
@@ -147,7 +144,11 @@ function speakResult(){readKhmer($('result').value)}
 function speakVoice(){readKhmer($('voiceText').value)}
 function stopVoice(){if('speechSynthesis'in window)speechSynthesis.cancel()}
 async function copyResult(){const t=$('result').value;if(!t){alert('មិនទាន់មានអត្ថបទទេ');return;}try{await navigator.clipboard.writeText(t);alert('ចម្លងបានជោគជ័យ');}catch(e){$('result').select();document.execCommand('copy');alert('បានចម្លងអត្ថបទ');}}
-$('videoFile').addEventListener('change',function(){const f=this.files?.[0];if(!f)return;const v=$('video');if(v.src)URL.revokeObjectURL(v.src);v.src=URL.createObjectURL(f);v.style.display='block';v.load();});
+$('videoFile').addEventListener('change',function(){const f=this.files?.[0];if(!f)return;const v=$('video');if(v.src)URL.revokeObjectURL(v.src);v.src=URL.createObjectURL(f);v.style.display='block';$('previewPlaceholder').style.display='none';v.load();});
+function fmtTime(seconds){if(!Number.isFinite(seconds))return '0:00';const m=Math.floor(seconds/60),s=Math.floor(seconds%60);return m+':'+String(s).padStart(2,'0');}
+$('video').addEventListener('loadedmetadata',()=>{$('videoDuration').textContent=fmtTime($('video').duration);$('videoSeek').max=$('video').duration||100;});
+$('video').addEventListener('timeupdate',()=>{$('videoCurrent').textContent=fmtTime($('video').currentTime);$('videoSeek').value=$('video').currentTime;});
+$('videoSeek').addEventListener('input',()=>{$('video').currentTime=Number($('videoSeek').value);});
 function stamp(seconds){const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=Math.floor(seconds%60),ms=Math.round((seconds-Math.floor(seconds))*1000);return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+','+String(ms).padStart(3,'0');}
 function makeSRT(){
  const raw=$('subtitle').value.trim();
