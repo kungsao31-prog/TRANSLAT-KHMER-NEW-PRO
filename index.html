@@ -136,7 +136,7 @@ async function translateVideo(){
   const res=await fetch(backend+'/translate-video',{method:'POST',headers:{'X-Gemini-API-Key':key},body:form});
   const data=await res.json();
   if(!res.ok||!data.success)throw new Error(data.error||'បកប្រែមិនបានទេ។');
-  const result=data.translation_result||'';
+  const result=(data.translation_result||'').replace(/^```(?:srt)?\\s*/i,'').replace(/\\s*```$/,'').trim();
   $('subtitle').value=result;$('result').value=result;$('voiceText').value=result;
   status.textContent='បកប្រែបានជោគជ័យ! អត្ថបទខ្មែរត្រូវបានដាក់ក្នុងផ្នែកចំណងជើងរង។ អ្នកអាចទាញយក SRT ខាងក្រោមបាន។';
  }catch(e){status.textContent='មានបញ្ហា៖ '+(e.message||'សូមពិនិត្យ Backend URL, API Key និងអ៊ីនធឺណិត។');}
@@ -149,5 +149,14 @@ function stopVoice(){if('speechSynthesis'in window)speechSynthesis.cancel()}
 async function copyResult(){const t=$('result').value;if(!t){alert('មិនទាន់មានអត្ថបទទេ');return;}try{await navigator.clipboard.writeText(t);alert('ចម្លងបានជោគជ័យ');}catch(e){$('result').select();document.execCommand('copy');alert('បានចម្លងអត្ថបទ');}}
 $('videoFile').addEventListener('change',function(){const f=this.files?.[0];if(!f)return;const v=$('video');if(v.src)URL.revokeObjectURL(v.src);v.src=URL.createObjectURL(f);v.style.display='block';v.load();});
 function stamp(seconds){const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=Math.floor(seconds%60),ms=Math.round((seconds-Math.floor(seconds))*1000);return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+','+String(ms).padStart(3,'0');}
-function makeSRT(){const lines=$('subtitle').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);if(!lines.length){alert('សូមបញ្ចូលអត្ថបទចំណងជើងរងជាមុន');return;}let srt=lines.map((line,i)=>(i+1)+'\n'+stamp(i*4)+' --> '+stamp((i+1)*4)+'\n'+line).join('\n\n')+'\n';const blob=new Blob(['\uFEFF'+srt],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='TRANSLAT-KHMER.srt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function makeSRT(){
+ const raw=$('subtitle').value.trim();
+ if(!raw){alert('សូមបញ្ចូលអត្ថបទចំណងជើងរងជាមុន');return;}
+ let srt=raw;
+ if(!/\\d{2}:\\d{2}:\\d{2},\\d{3}\\s*-->/.test(raw)){
+  const lines=raw.split(/\\n+/).map(x=>x.trim()).filter(Boolean);
+  srt=lines.map((line,i)=>(i+1)+'\\n'+stamp(i*4)+' --> '+stamp((i+1)*4)+'\\n'+line).join('\\n\\n')+'\\n';
+ }
+ const blob=new Blob(['\\uFEFF'+srt],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='TRANSLAT-KHMER.srt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 </script></body></html>
