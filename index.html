@@ -42,10 +42,11 @@ footer{text-align:center;color:#9b8ca8;font-size:12px;padding:22px}
 <p id="status" role="status" aria-live="polite"></p>
 </section>
 <section class="card">
-<h2>🔐 ២. កន្លែងដាក់ API Key (ស្រេចចិត្ត)</h2>
-<label for="apiKey">API Key</label><input id="apiKey" type="password" placeholder="បញ្ចូល API Key នៅពេលអ្នកមាន">
-<div class="row"><button class="green" onclick="saveKey()">💾 រក្សាទុក Key</button><button class="gray" onclick="clearKey()">លុប Key</button></div>
-<p id="keyStatus" class="hint">មិនទាន់មាន Key ក៏អាចប្រើការបកប្រែឥតគិតថ្លៃបានដែរ។ Key នេះត្រូវបានរក្សាទុកក្នុងទូរស័ព្ទប៉ុណ្ណោះ ហើយមិនទាន់ភ្ជាប់ទៅសេវា AI ណាមួយទេ។</p>
+<h2>🔐 ២. ភ្ជាប់ AI សម្រាប់បកប្រែវីដេអូ</h2>
+<label for="apiKey">Gemini API Key</label><input id="apiKey" type="password" autocomplete="off" placeholder="បិទភ្ជាប់ Gemini API Key នៅទីនេះ">
+<label for="backendUrl">អាសយដ្ឋានម៉ាស៊ីនបម្រើ (Backend URL)</label><input id="backendUrl" type="text" placeholder="https://your-app.onrender.com">
+<div class="row"><button class="green" onclick="saveKey()">💾 រក្សាទុក</button><button class="gray" onclick="clearKey()">លុប Key</button></div>
+<p id="keyStatus" class="hint">Key នឹងត្រូវប្រើពេលអ្នកចុចបកប្រែវីដេអូ។ ត្រូវដាក់ Backend URL ដែលបាន Deploy រួច។ កុំចែករំលែក API Key ជាមួយអ្នកដទៃ។</p>
 </section>
 <section class="card">
 <h2>🎬 ៣. វីដេអូដើម និងជ្រើសរើសភាសា</h2>
@@ -70,7 +71,9 @@ footer{text-align:center;color:#9b8ca8;font-size:12px;padding:22px}
 </select>
 <label for="videoTarget">បកប្រែទៅជាភាសា</label>
 <select id="videoTarget"><option value="km" selected>ភាសាខ្មែរ</option></select>
-<p class="hint">កន្លែងជ្រើសរើសភាសានេះស្ថិតនៅខាងក្រោមវីដេអូដើម ដូចដែលអ្នកបានស្នើ។ ភាសាដែលជ្រើសរើសនឹងត្រូវប្រើសម្រាប់ដំណើរការស្គាល់ និងបកប្រែសំឡេងនៅពេលភ្ជាប់មុខងារវីដេអូអូតូ។</p>
+<p class="hint">ជ្រើសរើសភាសាដើម រួចចុចប៊ូតុងបកប្រែ។ ត្រូវមានអ៊ីនធឺណិត និងភ្ជាប់ Gemini API Key ជាមួយ Backend URL ជាមុន។</p>
+<button id="videoTranslateBtn" class="green" type="button" onclick="translateVideo()">🌐 បកប្រែសំឡេងវីដេអូជាខ្មែរ</button>
+<p id="videoStatus" class="hint" role="status" aria-live="polite"></p>
 </section>
 <section class="card">
 <h2>💬 ៤. បង្កើតចំណងជើងរង SRT</h2>
@@ -87,7 +90,7 @@ footer{text-align:center;color:#9b8ca8;font-size:12px;padding:22px}
 </main>
 <footer>TRANSLAT KHMER NEW PRO · Version 1.4 · Language selection</footer>
 <script>
-const $=id=>document.getElementById(id);
+const $=id=>document.getElementById(id);\nloadSettings();
 async function translateText(){
  const input=$('original').value.trim(),lang=$('source').value,status=$('status'),btn=$('translateBtn');
  if(!input){status.textContent='សូមបញ្ចូលអត្ថបទជាមុន។';return;}
@@ -103,8 +106,42 @@ async function translateText(){
  }catch(e){status.textContent='បកប្រែមិនបានទេ។ សូមពិនិត្យអ៊ីនធឺណិត ឬសាកល្បងម្ដងទៀត។';}
  finally{btn.disabled=false;}
 }
-function saveKey(){const k=$('apiKey').value.trim();if(!k){$('keyStatus').textContent='សូមបញ្ចូល Key ជាមុន ឬទុកទទេក៏បាន។';return;}try{localStorage.setItem('tk_new_pro_api_key',k);$('apiKey').value='';$('keyStatus').textContent='បានរក្សាទុក Key ក្នុងទូរស័ព្ទ។ Key មិនទាន់ត្រូវបានប្រើដោយមុខងារណាមួយទេ។';}catch(e){$('keyStatus').textContent='មិនអាចរក្សាទុក Key បានទេ។';}}
-function clearKey(){localStorage.removeItem('tk_new_pro_api_key');$('apiKey').value='';$('keyStatus').textContent='បានលុប Key ដែលរក្សាទុកក្នុងទូរស័ព្ទ។';}
+function saveKey(){
+ const k=$('apiKey').value.trim(),url=$('backendUrl').value.trim();
+ if(k){localStorage.setItem('tk_new_pro_api_key',k);}
+ if(url){localStorage.setItem('tk_new_pro_backend_url',url.replace(/\\/+$/,''));}
+ $('apiKey').value='';
+ $('keyStatus').textContent='បានរក្សាទុកការកំណត់ក្នុងទូរស័ព្ទ។ Key នឹងប្រើពេលបកប្រែវីដេអូ។';
+}
+function clearKey(){
+ localStorage.removeItem('tk_new_pro_api_key');
+ $('apiKey').value='';
+ $('keyStatus').textContent='បានលុប API Key។ Backend URL នៅរក្សាទុកដដែល។';
+}
+function loadSettings(){
+ $('backendUrl').value=localStorage.getItem('tk_new_pro_backend_url')||'';
+ if(localStorage.getItem('tk_new_pro_api_key')) $('keyStatus').textContent='មាន API Key រក្សាទុកក្នុងទូរស័ព្ទរួចហើយ។';
+}
+async function translateVideo(){
+ const file=$('videoFile').files?.[0];
+ const key=localStorage.getItem('tk_new_pro_api_key');
+ const backend=(localStorage.getItem('tk_new_pro_backend_url')||'').replace(/\\/+$/,'');
+ const status=$('videoStatus'),btn=$('videoTranslateBtn');
+ if(!file){status.textContent='សូមជ្រើសរើសវីដេអូជាមុន។';return;}
+ if(!key){status.textContent='សូមបញ្ចូល និងរក្សាទុក Gemini API Key ជាមុន។';return;}
+ if(!backend||!/^https:\\/\\//i.test(backend)){status.textContent='សូមបញ្ចូល Backend URL ដែលចាប់ផ្តើមដោយ https:// រួចរក្សាទុក។';return;}
+ const form=new FormData();form.append('video',file);form.append('source_language',$('videoSource').value);
+ btn.disabled=true;status.textContent='កំពុងផ្ញើវីដេអូ និងបកប្រែ... សូមរង់ចាំ។';
+ try{
+  const res=await fetch(backend+'/translate-video',{method:'POST',headers:{'X-Gemini-API-Key':key},body:form});
+  const data=await res.json();
+  if(!res.ok||!data.success)throw new Error(data.error||'បកប្រែមិនបានទេ។');
+  const result=data.translation_result||'';
+  $('subtitle').value=result;$('result').value=result;$('voiceText').value=result;
+  status.textContent='បកប្រែបានជោគជ័យ! អត្ថបទខ្មែរត្រូវបានដាក់ក្នុងផ្នែកចំណងជើងរង។ អ្នកអាចទាញយក SRT ខាងក្រោមបាន។';
+ }catch(e){status.textContent='មានបញ្ហា៖ '+(e.message||'សូមពិនិត្យ Backend URL, API Key និងអ៊ីនធឺណិត។');}
+ finally{btn.disabled=false;}
+}
 function readKhmer(t){if(!t.trim()){alert('សូមបញ្ចូលអត្ថបទជាមុន');return;}if(!('speechSynthesis'in window)){alert('ទូរស័ព្ទនេះមិនគាំទ្រសំឡេងអានទេ។');return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='km-KH';u.rate=.85;speechSynthesis.speak(u);}
 function speakResult(){readKhmer($('result').value)}
 function speakVoice(){readKhmer($('voiceText').value)}
