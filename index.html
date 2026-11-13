@@ -187,9 +187,10 @@ async function translateVideo(){
   if(!data.ok)throw new Error(data.error||'AI មិនអាចបកប្រែវីដេអូបានទេ។');
   const segments=Array.isArray(data.segments)?data.segments:[];
   if(!segments.length)throw new Error('រកមិនឃើញសំឡេងនិយាយក្នុងវីដេអូនេះទេ។');
-  const khmer=segments.map(seg=>String(seg.khmer||'').trim()).filter(Boolean).join('\n');
+  const getKhmer=seg=>String(seg.translation||seg.khmer||'').trim();
+  const khmer=segments.map(getKhmer).filter(Boolean).join('\n');
   if(!khmer)throw new Error('AI មិនបានបង្កើតអត្ថបទខ្មែរទេ។');
-  const srt=segments.map((seg,i)=>(i+1)+'\n'+stamp(Number(seg.start)||0)+' --> '+stamp(Number(seg.end)||0)+'\n'+String(seg.khmer||'').trim()).filter(x=>x.split('\n').length>=3).join('\n\n')+'\n';
+  const srt=segments.map((seg,i)=>(i+1)+'\n'+stamp(Number(seg.start)||0)+' --> '+stamp(Number(seg.end)||0)+'\n'+getKhmer(seg)).filter(x=>x.split('\n').length>=3).join('\n\n')+'\n';
   $('subtitle').value=srt;$('result').value=khmer;$('voiceText').value=khmer;
   updateVideoProgress(100,'ស្គាល់សំឡេង និងបកប្រែបានរួច','បានបកប្រែ '+segments.length+' ឃ្លា។ ឥឡូវកំពុងបង្កើតសំឡេងខ្មែរ និងវីដេអូថ្មី។');
   status.textContent='ជំហានទី ២/២៖ កំពុងបង្កើតសំឡេងខ្មែរ និងដាក់ចូលក្នុងវីដេអូ។';
