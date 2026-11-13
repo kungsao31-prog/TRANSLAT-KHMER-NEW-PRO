@@ -26,6 +26,18 @@ video{display:block;width:100%;height:100%;object-fit:contain;border-radius:17px
 .bottom-nav{position:fixed;z-index:10;bottom:12px;left:50%;transform:translateX(-50%);width:min(92%,590px);display:flex;align-items:center;justify-content:space-around;gap:6px;padding:8px 10px;border-radius:35px;background:#101521ee;border:1px solid #8b8a9a;box-shadow:0 0 0 4px #080b13,0 0 22px #7864ff66;backdrop-filter:blur(12px)}.bottom-nav button{width:auto;min-width:40px;margin:0;padding:10px 12px;background:transparent;color:#f2f3fa;border:0;border-radius:25px;font-size:18px}.bottom-nav button.active{background:var(--mint);color:#073b36;font-size:14px;padding:12px 17px}
 .progress-panel{display:none;margin-top:14px;padding:13px;border:1px solid #52716e;border-radius:15px;background:#0d1a20}.progress-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px}.progress-number{font-size:22px;font-weight:900;color:var(--mint);font-variant-numeric:tabular-nums}.progress-track{height:12px;background:#29353d;border-radius:99px;overflow:hidden;margin:10px 0 7px}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#17bda5,#50f3d1);border-radius:99px;transition:width .15s}.progress-note{font-size:12px;color:var(--muted);line-height:1.6}.auto-row{display:flex;align-items:center;gap:9px;margin-top:10px;color:#e7edf2;font-size:13px}.auto-row input{width:19px;height:19px;accent-color:var(--mint)}
 @media(max-width:420px){header{padding:13px 14px}.brand h1{font-size:14px}main{padding:3px 10px 100px}.card{padding:13px}.video-card{padding:12px 10px 15px}.video-layout{grid-template-columns:58px minmax(0,1fr);gap:9px}.video-actions button{font-size:19px;min-height:57px}.preview-placeholder{font-size:15px}.bottom-nav{bottom:9px}}
+
+/* Compact neon editor styling inspired by the requested mobile design */
+body{background:#0c0f1d;color:#fff}
+header{max-width:460px;background:#151932;border:1px solid rgba(0,242,254,.24);border-bottom:0;border-radius:22px 22px 0 0;margin:12px auto 0}
+main{max-width:460px;background:#151932;border:1px solid rgba(0,242,254,.24);border-top:0;border-bottom:0;padding:8px 14px 105px}
+.card{background:#151932;border:1px solid rgba(0,242,254,.22);border-radius:18px;box-shadow:0 8px 24px rgba(0,242,254,.09)}
+h2{color:#00f2fe}
+.video-card{background:#151932;border:1px solid rgba(0,242,254,.38);box-shadow:0 0 18px rgba(0,242,254,.12)}
+.video-screen{border-color:#00f2fe;box-shadow:inset 0 0 18px rgba(0,242,254,.12)}
+.video-run{background:linear-gradient(135deg,#00f2fe,#4facfe)!important;color:#0c0f1d!important}
+.bottom-nav{background:#151932ee;border-color:rgba(0,242,254,.35)}
+@media(max-width:480px){header{margin-top:0;border-radius:0}main{padding-left:10px;padding-right:10px}}
 </style></head>
 <body>
 <header><div class="brand"><div class="brand-mark">🌐</div><div><h1>TRANSLAT KHMER NEW PRO</h1><p>កម្មវិធីបកប្រែភាសា និងវីដេអូជាភាសាខ្មែរ</p></div></div><div class="header-pill">⌄</div></header>
@@ -90,7 +102,8 @@ video{display:block;width:100%;height:100%;object-fit:contain;border-radius:17px
 </nav>
 <footer>TRANSLAT KHMER NEW PRO · Version 1.4 · Language selection</footer>
 <script>
-const $=id=>document.getElementById(id);\nloadSettings();
+const $=id=>document.getElementById(id);
+loadSettings();
 async function translateText(){
  const input=$('original').value.trim(),lang=$('source').value,status=$('status'),btn=$('translateBtn');
  if(!input){status.textContent='សូមបញ្ចូលអត្ថបទជាមុន។';return;}
@@ -166,10 +179,10 @@ function makeSRT(){
  const raw=$('subtitle').value.trim();
  if(!raw){alert('សូមបញ្ចូលអត្ថបទចំណងជើងរងជាមុន');return;}
  let srt=raw;
- if(!/\\d{2}:\\d{2}:\\d{2},\\d{3}\\s*-->/.test(raw)){
-  const lines=raw.split(/\\n+/).map(x=>x.trim()).filter(Boolean);
-  srt=lines.map((line,i)=>(i+1)+'\\n'+stamp(i*4)+' --> '+stamp((i+1)*4)+'\\n'+line).join('\\n\\n')+'\\n';
+ if(!/\d{2}:\d{2}:\d{2},\d{3}\s*-->/.test(raw)){
+  const lines=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  srt=lines.map((line,i)=>(i+1)+'\n'+stamp(i*4)+' --> '+stamp((i+1)*4)+'\n'+line).join('\n\n')+'\n';
  }
- const blob=new Blob(['\\uFEFF'+srt],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='TRANSLAT-KHMER.srt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ const blob=new Blob(['\uFEFF'+srt],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='TRANSLAT-KHMER.srt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 </script></body></html>
