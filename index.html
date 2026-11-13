@@ -57,7 +57,7 @@ h2{color:#00f2fe}
 </section>
 <section class="card">
 <h2>🔐 ២. ភ្ជាប់ AI សម្រាប់បកប្រែវីដេអូ</h2>
-<label for="apiKey">Gemini API Key</label><input id="apiKey" type="password" autocomplete="off" placeholder="បិទភ្ជាប់ Gemini API Key នៅទីនេះ">
+<label for="apiKey">Gemini API Key (កំណត់នៅ Render)</label><input id="apiKey" type="password" autocomplete="off" placeholder="មិនចាំបាច់បញ្ចូល Key នៅទីនេះ">
 <label for="backendUrl">អាសយដ្ឋានម៉ាស៊ីនបម្រើ (Backend URL)</label><input id="backendUrl" type="text" placeholder="https://your-app.onrender.com">
 <div class="row"><button class="green" onclick="saveKey()">💾 រក្សាទុក</button><button class="gray" onclick="clearKey()">លុប Key</button></div>
 <p id="keyStatus" class="hint">Key នឹងត្រូវប្រើពេលអ្នកចុចបកប្រែវីដេអូ។ ត្រូវដាក់ Backend URL ដែលបាន Deploy រួច។ កុំចែករំលែក API Key ជាមួយអ្នកដទៃ។</p>
@@ -120,20 +120,20 @@ async function translateText(){
  finally{btn.disabled=false;}
 }
 function saveKey(){
- const k=$('apiKey').value.trim(),url=$('backendUrl').value.trim();
- if(k){localStorage.setItem('tk_new_pro_api_key',k);}
- if(url){localStorage.setItem('tk_new_pro_backend_url',url.replace(/\/+$/,''));}
+ const url=$('backendUrl').value.trim().replace(/\/+$/,'');
+ if(url){localStorage.setItem('tk_new_pro_backend_url',url);}
  $('apiKey').value='';
- $('keyStatus').textContent='បានរក្សាទុកការកំណត់ក្នុងទូរស័ព្ទ។ Key នឹងប្រើពេលបកប្រែវីដេអូ។';
+ $('keyStatus').textContent='រក្សាទុក Backend URL រួច។ Gemini API Key ត្រូវកំណត់នៅ Render Environment ជា GEMINI_API_KEY ដើម្បីរក្សាសុវត្ថិភាព។';
 }
 function clearKey(){
  localStorage.removeItem('tk_new_pro_api_key');
  $('apiKey').value='';
- $('keyStatus').textContent='បានលុប API Key។ Backend URL នៅរក្សាទុកដដែល។';
+ $('keyStatus').textContent='កម្មវិធីមិនរក្សាទុក Gemini API Key លើទូរស័ព្ទទេ។ សូមគ្រប់គ្រង Key នៅ Render Environment។';
 }
 function loadSettings(){
  $('backendUrl').value=localStorage.getItem('tk_new_pro_backend_url')||'';
- if(localStorage.getItem('tk_new_pro_api_key')) $('keyStatus').textContent='មាន API Key រក្សាទុកក្នុងទូរស័ព្ទរួចហើយ។';
+ $('apiKey').value='';
+ $('keyStatus').textContent='Gemini API Key ត្រូវកំណត់នៅ Render Environment ជា GEMINI_API_KEY។ កុំបញ្ចូល Key ក្នុងកម្មវិធី។';
 }
 function updateVideoProgress(percent,label,note){
  const panel=$('progressPanel');panel.style.display='block';
@@ -142,79 +142,76 @@ function updateVideoProgress(percent,label,note){
  if(label)$('progressLabel').textContent=label;
  if(note)$('progressNote').textContent=note;
 }
-function translateVideo(){
+async function translateVideo(){
  const file=$('videoFile').files?.[0];
- const backend=(localStorage.getItem('tk_new_pro_backend_url')||'').replace(/\\/+$/,'');
+ const backend=(localStorage.getItem('tk_new_pro_backend_url')||'').replace(/\/+$/,'');
  const status=$('videoStatus'),btn=$('videoTranslateBtn');
  if(!file){status.textContent='សូមជ្រើសរើសវីដេអូជាមុន។';return;}
- if(!backend||!/^https:\\/\\//i.test(backend)){status.textContent='សូមបញ្ចូល Backend URL ដែលបាន Deploy រួច ហើយចុចរក្សាទុក។';return;}
- const form=new FormData();
- form.append('video',file);
- form.append('sourceLanguage',$('videoSource').value);
+ if(!/^https:\/\//i.test(backend)){status.textContent='សូមបញ្ចូល Backend URL រួចចុចរក្សាទុក។';return;}
  btn.disabled=true;
- status.textContent='កំពុងផ្ញើវីដេអូ និងចាប់ផ្ដើមស្គាល់សំឡេង...';
- updateVideoProgress(0,'កំពុងផ្ញើវីដេអូទៅម៉ាស៊ីនមេ','សូមរង់ចាំការផ្ញើឯកសារចប់។');
- const xhr=new XMLHttpRequest();
- xhr.open('POST',backend+'/api/video/translate');
- xhr.setRequestHeader('Accept','application/json');
- xhr.upload.onprogress=function(e){
-  if(e.lengthComputable){
-   const p=e.total?e.loaded/e.total*100:0;
-   updateVideoProgress(p,'កំពុងផ្ញើវីដេអូទៅម៉ាស៊ីនមេ','បានផ្ញើ '+Math.round(p)+'% នៃឯកសារវីដេអូ។');
-  }
+ $('subtitle').value='';$('result').value='';$('voiceText').value='';
+ updateVideoProgress(0,'កំពុងត្រៀមផ្ញើវីដេអូ','សូមរង់ចាំ...');
+ status.textContent='ជំហានទី ១/២៖ កំពុងផ្ញើវីដេអូទៅ AI ដើម្បីស្គាល់សំឡេង និងបកប្រែ។';
+ const sendForm=function(path,form,onProgress,responseType){
+  return new Promise((resolve,reject)=>{
+   const xhr=new XMLHttpRequest();
+   xhr.open('POST',backend+path);
+   xhr.setRequestHeader('Accept',responseType==='blob'?'video/mp4':'application/json');
+   if(responseType==='blob')xhr.responseType='blob';
+   xhr.upload.onprogress=function(e){
+    if(e.lengthComputable&&onProgress)onProgress(Math.round(e.loaded/e.total*100));
+   };
+   xhr.onload=function(){
+    if(xhr.status>=200&&xhr.status<300){resolve(responseType==='blob'?xhr.response:xhr.responseText);return;}
+    if(responseType==='blob'&&xhr.response instanceof Blob){
+     xhr.response.text().then(t=>{try{const j=JSON.parse(t);reject(new Error(j.error||('HTTP '+xhr.status)));}catch(e){reject(new Error('HTTP '+xhr.status));}});
+    }else{
+     try{const j=JSON.parse(xhr.responseText||'{}');reject(new Error(j.error||('HTTP '+xhr.status)));}catch(e){reject(new Error('HTTP '+xhr.status));}
+    }
+   };
+   xhr.onerror=()=>reject(new Error('មិនអាចភ្ជាប់ទៅ Backend បានទេ។'));
+   xhr.ontimeout=()=>reject(new Error('ការងារចំណាយពេលយូរពេក។ សូមសាកល្បងវីដេអូខ្លីជាងនេះ។'));
+   xhr.timeout=15*60*1000;
+   xhr.send(form);
+  });
  };
- xhr.upload.onload=function(){
-  updateVideoProgress(100,'បានផ្ញើវីដេអូ 100%','ការផ្ញើចប់ហើយ។ ឥឡូវម៉ាស៊ីនមេកំពុងស្គាល់សំឡេង និងបកប្រែជាភាសាខ្មែរ។');
-  status.textContent='កំពុងស្គាល់សំឡេង និងបកប្រែ... សូមកុំបិទកម្មវិធី។';
- };
- xhr.onload=function(){
-  let data={};
-  try{data=JSON.parse(xhr.responseText||'{}');}
-  catch(e){status.textContent='ម៉ាស៊ីនមេបានផ្ញើលទ្ធផលមិនត្រឹមត្រូវ។ HTTP '+xhr.status;btn.disabled=false;return;}
-  if(xhr.status<200||xhr.status>=300||!data.ok){
-   const msg=data.error||('HTTP '+xhr.status);
-   status.textContent='បកប្រែមិនបាន៖ '+msg;
-   $('progressLabel').textContent='បកប្រែមិនបានជោគជ័យ';
-   $('progressNote').textContent=msg;
-   btn.disabled=false;return;
-  }
+ try{
+  const translateForm=new FormData();
+  translateForm.append('video',file);
+  translateForm.append('sourceLanguage',$('videoSource').value);
+  const translatedText=await sendForm('/api/video/translate',translateForm,p=>{
+   updateVideoProgress(p,'ជំហានទី ១/២៖ ផ្ញើវីដេអូទៅ AI','បានផ្ញើ '+p+'% នៃឯកសារវីដេអូ។');
+  });
+  let data;
+  try{data=JSON.parse(translatedText||'{}');}catch(e){throw new Error('លទ្ធផលពី AI មិនមែនជាទិន្នន័យត្រឹមត្រូវទេ។');}
+  if(!data.ok)throw new Error(data.error||'AI មិនអាចបកប្រែវីដេអូបានទេ។');
   const segments=Array.isArray(data.segments)?data.segments:[];
-  if(!segments.length){
-   status.textContent='AI មិនបានរកឃើញសំឡេងនិយាយក្នុងវីដេអូនេះទេ។';
-   $('progressLabel').textContent='រកមិនឃើញសំឡេង';
-   $('progressNote').textContent='សូមសាកល្បងវីដេអូដែលមានសំឡេងនិយាយច្បាស់។';
-   btn.disabled=false;return;
-  }
-  const stamp=function(value){
-   const n=Math.max(0,Number(value)||0),h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=Math.floor(n%60),ms=Math.floor((n-Math.floor(n))*1000);
-   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+','+String(ms).padStart(3,'0');
-  };
-  const srt=segments.map((seg,i)=>(i+1)+'\\n'+stamp(seg.start)+' --> '+stamp(seg.end)+'\\n'+String(seg.khmer||'').trim()).filter(x=>!x.endsWith('\\n')).join('\\n\\n');
-  const khmer=segments.map(seg=>String(seg.khmer||'').trim()).filter(Boolean).join('\\n');
-  $('subtitle').value=srt;
-  $('result').value=khmer;
-  $('voiceText').value=khmer;
-  $('progressLabel').textContent='បកប្រែបានជោគជ័យ';
-  $('progressPercent').textContent='100%';
-  $('progressFill').style.width='100%';
-  $('progressNote').textContent='បានស្គាល់សំឡេង និងបកប្រែ '+segments.length+' ឃ្លា។ អ្នកអាចទាញយក SRT បាន។';
-  status.textContent='បកប្រែបានជោគជ័យ! បានបង្ហាញអត្ថបទខ្មែរនៅក្នុងលទ្ធផល និងចំណងជើងរង។';
-  if($('videoKhmerVoiceToggle').checked) readKhmer(khmer);
-  btn.disabled=false;
- };
- xhr.onerror=function(){
-  status.textContent='មិនអាចភ្ជាប់ទៅ Backend បានទេ។ សូមពិនិត្យអ៊ីនធឺណិត និង Backend URL។';
-  $('progressLabel').textContent='ការភ្ជាប់មានបញ្ហា';
-  $('progressNote').textContent='សូមពិនិត្យថា Render service កំពុង Live។';
-  btn.disabled=false;
- };
- xhr.ontimeout=function(){
-  status.textContent='ម៉ាស៊ីនមេចំណាយពេលយូរពេក។ សូមសាកល្បងវីដេអូខ្លីជាងនេះ។';
-  $('progressLabel').textContent='អស់ពេលរង់ចាំ';
-  btn.disabled=false;
- };
- xhr.timeout=15*60*1000;
- xhr.send(form);
+  if(!segments.length)throw new Error('រកមិនឃើញសំឡេងនិយាយក្នុងវីដេអូនេះទេ។');
+  const khmer=segments.map(seg=>String(seg.khmer||'').trim()).filter(Boolean).join('\n');
+  if(!khmer)throw new Error('AI មិនបានបង្កើតអត្ថបទខ្មែរទេ។');
+  const srt=segments.map((seg,i)=>(i+1)+'\n'+stamp(Number(seg.start)||0)+' --> '+stamp(Number(seg.end)||0)+'\n'+String(seg.khmer||'').trim()).filter(x=>x.split('\n').length>=3).join('\n\n')+'\n';
+  $('subtitle').value=srt;$('result').value=khmer;$('voiceText').value=khmer;
+  updateVideoProgress(100,'ស្គាល់សំឡេង និងបកប្រែបានរួច','បានបកប្រែ '+segments.length+' ឃ្លា។ ឥឡូវកំពុងបង្កើតសំឡេងខ្មែរ និងវីដេអូថ្មី។');
+  status.textContent='ជំហានទី ២/២៖ កំពុងបង្កើតសំឡេងខ្មែរ និងដាក់ចូលក្នុងវីដេអូ។';
+  const dubForm=new FormData();
+  dubForm.append('video',file);
+  dubForm.append('segments',JSON.stringify(segments));
+  const dubbedBlob=await sendForm('/api/dub',dubForm,p=>{
+   updateVideoProgress(p,'ជំហានទី ២/២៖ ផ្ញើវីដេអូដើម្បីបង្កើតសំឡេងខ្មែរ','បានផ្ញើ '+p+'% នៃឯកសារសម្រាប់បង្កើតវីដេអូសំឡេងខ្មែរ។');
+  },'blob');
+  const oldUrl=$('video').dataset.dubbedUrl;
+  if(oldUrl)URL.revokeObjectURL(oldUrl);
+  const dubbedUrl=URL.createObjectURL(dubbedBlob);
+  $('video').dataset.dubbedUrl=dubbedUrl;
+  $('video').src=dubbedUrl;$('video').style.display='block';$('previewPlaceholder').style.display='none';$('video').load();
+  updateVideoProgress(100,'រួចរាល់ 100%','បានបកប្រែ '+segments.length+' ឃ្លា និងបង្កើតវីដេអូ MP4 ដែលមានសំឡេងខ្មែរ។');
+  status.textContent='ជោគជ័យ! វីដេអូថ្មីមានសំឡេងខ្មែរ។ ចុច Play ដើម្បីស្តាប់។';
+  if($('videoKhmerVoiceToggle').checked)readKhmer(khmer);
+ }catch(error){
+  status.textContent='មានបញ្ហា៖ '+(error.message||'ដំណើរការមិនបាន។');
+  $('progressLabel').textContent='ដំណើរការមិនបានជោគជ័យ';
+  $('progressNote').textContent=error.message||'សូមពិនិត្យ Backend និង Render Logs។';
+ }finally{btn.disabled=false;}
 }
 function readKhmer(t){if(!t.trim()){alert('សូមបញ្ចូលអត្ថបទជាមុន');return;}if(!('speechSynthesis'in window)){alert('ទូរស័ព្ទនេះមិនគាំទ្រសំឡេងអានទេ។');return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='km-KH';u.rate=.85;speechSynthesis.speak(u);}
 function speakResult(){readKhmer($('result').value)}
