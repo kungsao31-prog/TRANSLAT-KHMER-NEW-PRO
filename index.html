@@ -109,7 +109,7 @@ async function translateText(){
 function saveKey(){
  const k=$('apiKey').value.trim(),url=$('backendUrl').value.trim();
  if(k){localStorage.setItem('tk_new_pro_api_key',k);}
- if(url){localStorage.setItem('tk_new_pro_backend_url',url.replace(/\\/+$/,''));}
+ if(url){localStorage.setItem('tk_new_pro_backend_url',url.replace(/\/+$/,''));}
  $('apiKey').value='';
  $('keyStatus').textContent='បានរក្សាទុកការកំណត់ក្នុងទូរស័ព្ទ។ Key នឹងប្រើពេលបកប្រែវីដេអូ។';
 }
@@ -125,11 +125,11 @@ function loadSettings(){
 async function translateVideo(){
  const file=$('videoFile').files?.[0];
  const key=localStorage.getItem('tk_new_pro_api_key');
- const backend=(localStorage.getItem('tk_new_pro_backend_url')||'').replace(/\\/+$/,'');
+ const backend=(localStorage.getItem('tk_new_pro_backend_url')||'').replace(/\/+$/,'');
  const status=$('videoStatus'),btn=$('videoTranslateBtn');
  if(!file){status.textContent='សូមជ្រើសរើសវីដេអូជាមុន។';return;}
  if(!key){status.textContent='សូមបញ្ចូល និងរក្សាទុក Gemini API Key ជាមុន។';return;}
- if(!backend||!/^https:\\/\\//i.test(backend)){status.textContent='សូមបញ្ចូល Backend URL ដែលចាប់ផ្តើមដោយ https:// រួចរក្សាទុក។';return;}
+ if(!backend||!/^https:\/\//i.test(backend)){status.textContent='សូមបញ្ចូល Backend URL ដែលចាប់ផ្តើមដោយ https:// រួចរក្សាទុក។';return;}
  const form=new FormData();form.append('video',file);form.append('source_language',$('videoSource').value);
  btn.disabled=true;status.textContent='កំពុងផ្ញើវីដេអូ និងបកប្រែ... សូមរង់ចាំ។';
  try{
