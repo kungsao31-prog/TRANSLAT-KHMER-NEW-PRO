@@ -57,10 +57,10 @@ h2{color:#00f2fe}
 </section>
 <section class="card">
 <h2>🔐 ២. ភ្ជាប់ AI សម្រាប់បកប្រែវីដេអូ</h2>
-<label for="apiKey">Gemini API Key (កំណត់នៅ Render)</label><input id="apiKey" type="password" autocomplete="off" placeholder="កំណត់ GEMINI_API_KEY នៅ Render ប៉ុណ្ណោះ">
+<label for="apiKey">Gemini API Key (រក្សាទុកនៅ Backend ថ្មី)</label><input id="apiKey" type="password" autocomplete="off" placeholder="កំណត់ GEMINI_API_KEY នៅ Render ប៉ុណ្ណោះ">
 <label for="backendUrl">អាសយដ្ឋានម៉ាស៊ីនបម្រើ (Backend URL)</label><input id="backendUrl" type="text" placeholder="https://your-app.onrender.com">
 <div class="row"><button class="green" onclick="saveKey()">💾 រក្សាទុក</button><button class="gray" onclick="clearKey()">លុប Key</button></div>
-<p id="keyStatus" class="hint">Key នឹងត្រូវប្រើពេលអ្នកចុចបកប្រែវីដេអូ។ ត្រូវដាក់ Backend URL ដែលបាន Deploy រួច។ កុំចែករំលែក API Key ជាមួយអ្នកដទៃ។</p>
+<p id="keyStatus" class="hint">សូមដាក់ URL របស់ Backend ផ្ទាល់ខ្លួនសម្រាប់ TRANSLAT-KHMER-NEW-PRO។ កម្មវិធីមិនភ្ជាប់ទៅ Backend របស់កម្មវិធីចាស់ទេ។</p>
 </section>
 <section class="card video-card" id="dubbed">
 <h2>🎬 វីដេអូបកប្រែ · DUBBED</h2>
@@ -131,9 +131,9 @@ function clearKey(){
  $('keyStatus').textContent='កម្មវិធីមិនរក្សាទុក Gemini API Key លើទូរស័ព្ទទេ។ សូមគ្រប់គ្រង Key នៅ Render Environment។';
 }
 function loadSettings(){
- $('backendUrl').value=localStorage.getItem('tk_new_pro_backend_url')||'https://khmer-ai-translator.onrender.com';
+ $('backendUrl').value=localStorage.getItem('tk_new_pro_backend_url')||'';
  $('apiKey').value='';
- $('keyStatus').textContent='Gemini API Key ត្រូវកំណត់នៅ Render Environment ជា GEMINI_API_KEY។ កុំបញ្ចូល Key ក្នុងកម្មវិធី។';
+ $('keyStatus').textContent='Backend URL មិនទាន់បានកំណត់។ សូម Deploy Backend ថ្មីរបស់ TRANSLAT-KHMER-NEW-PRO ជាមុន។';
 }
 function updateVideoProgress(percent,label,note){
  const panel=$('progressPanel');panel.style.display='block';
