@@ -2,6 +2,7 @@ services:
   - type: web
     name: translat-khmer-new-pro-api
     runtime: node
+    plan: free
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
