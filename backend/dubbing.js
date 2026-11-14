@@ -16,10 +16,12 @@ const JOB_TTL_MS = 30 * 60 * 1000;
 function run(command, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
     let stderr = "";
+    child.stdout.on("data", chunk => { stdout += chunk; });
     child.stderr.on("data", chunk => { stderr += chunk; });
     child.on("error", reject);
-    child.on("close", code => code === 0 ? resolve(stderr) : reject(new Error((stderr || command + " failed").slice(-1800))));
+    child.on("close", code => code === 0 ? resolve({ stdout, stderr }) : reject(new Error((stderr || command + " failed").slice(-1800))));
   });
 }
 function makeWav(pcm, sampleRate = 24000, channels = 1) {
@@ -56,8 +58,8 @@ async function runJob(job,videoBuffer,segments,apiKey){
   try{
     const input=path.join(dir,"input-video"),output=path.join(dir,"TRANSLAT-KHMER-DUBBED.mp4");
     await fs.writeFile(input,videoBuffer);
-    const probeText=await run(ffprobe.path,["-v","error","-show_entries","format=duration:stream=codec_type","-of","json",input]);
-    const probe=JSON.parse(probeText),duration=Number(probe.format?.duration);
+    const probeResult=await run(ffprobe.path,["-v","error","-show_entries","format=duration:stream=codec_type","-of","json",input]);
+    const probe=JSON.parse(probeResult.stdout),duration=Number(probe.format?.duration);
     if(!Number.isFinite(duration)||duration<=0||!probe.streams?.some(s=>s.codec_type==="video")) throw new Error("មិនអាចអានរយៈពេល ឬ Video Stream របស់វីដេអូនេះបានទេ។");
     const hasOriginalAudio=probe.streams.some(s=>s.codec_type==="audio");
     const clean=segments.map(s=>({start:Math.max(0,Math.min(duration,Number(s.start)||0)),text:String(s.translation||s.khmer||"").trim()})).filter(s=>s.text&&s.start<duration);
