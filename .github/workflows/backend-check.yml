@@ -1,0 +1,36 @@
+name: Backend validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-check.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install frontend dependencies
+        run: npm install
+      - name: Build mobile web app
+        run: npm run build
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+      - name: Check JavaScript syntax
+        working-directory: backend
+        run: |
+          node --check server.js
+          node --check dubbing.js
+      - name: Run backend unit tests
+        working-directory: backend
+        run: npm test
+      - name: Verify FFmpeg binaries
+        working-directory: backend
+        run: |
+          node --input-type=module -e "import ffmpeg from 'ffmpeg-static'; import ffprobe from 'ffprobe-static'; import fs from 'node:fs'; if (!ffmpeg || !fs.existsSync(ffmpeg) || !ffprobe.path || !fs.existsSync(ffprobe.path)) process.exit(1); console.log('FFmpeg and FFprobe binaries found');"

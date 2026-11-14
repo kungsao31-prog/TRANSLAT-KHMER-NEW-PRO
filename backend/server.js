@@ -8,6 +8,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
+import { createDubbingRouter } from "./dubbing.js";
 
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
@@ -88,14 +89,7 @@ app.post("/api/video/translate", upload.single("video"), async (req, res) => {
   }
 });
 
-// Audio dubbing is intentionally not faked: the separate speech-generation pipeline
-// must be configured before this endpoint can return a dubbed MP4.
-app.post("/api/dub", upload.single("video"), async (_req, res) => {
-  res.status(501).json({
-    ok: false,
-    error: "មុខងារបង្កើតសំឡេងខ្មែរដាក់ចូលវីដេអូកំពុងត្រូវរៀបចំ។ ពេលនេះអាចបង្កើតអត្ថបទបកប្រែ និង Subtitle ជាមុនសិន។"
-  });
-});
+app.use(createDubbingRouter(upload));
 
 app.use((err, _req, res, _next) => {
   const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
