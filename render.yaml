@@ -14,3 +14,7 @@ services:
         value: gemini-3.8-flash
       - key: MAX_VIDEO_MB
         value: "80"
+      - key: GEMINI_TTS_MODEL
+        value: gemini-3.8-flash-tts
+      - key: GEMINI_TTS_VOICE
+        value: Kore
