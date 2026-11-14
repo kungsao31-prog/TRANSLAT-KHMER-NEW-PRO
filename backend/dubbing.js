@@ -4,193 +4,111 @@ import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
 import { spawn } from "node:child_process";
+import ffmpegPath from "ffmpeg-static";
+import ffprobe from "ffprobe-static";
 
-const router = express.Router();
 const jobs = new Map();
-const TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts";
-const TTS_VOICE = process.env.GEMINI_TTS_VOICE || "Kore";
-const MAX_SEGMENTS = 100;
+const MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts";
+const VOICE = process.env.GEMINI_TTS_VOICE || "Kore";
+const MAX_SEGMENTS = 80;
 const JOB_TTL_MS = 30 * 60 * 1000;
 
-function run(command, args, options = {}) {
+function run(command, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"], ...options });
-    let stdout = "";
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
     let stderr = "";
-    child.stdout.on("data", chunk => { stdout += chunk; });
     child.stderr.on("data", chunk => { stderr += chunk; });
     child.on("error", reject);
-    child.on("close", code => {
-      if (code === 0) resolve({ stdout, stderr });
-      else reject(new Error((stderr || command + " failed").slice(-1800)));
-    });
+    child.on("close", code => code === 0 ? resolve(stderr) : reject(new Error((stderr || command + " failed").slice(-1800))));
   });
 }
-
-function setJob(job, progress, stage, extra = {}) {
-  Object.assign(job, { progress, stage, updatedAt: Date.now(), ...extra });
+function makeWav(pcm, sampleRate = 24000, channels = 1) {
+  const h = Buffer.alloc(44);
+  h.write("RIFF",0); h.writeUInt32LE(36+pcm.length,4); h.write("WAVE",8); h.write("fmt ",12);
+  h.writeUInt32LE(16,16); h.writeUInt16LE(1,20); h.writeUInt16LE(channels,22);
+  h.writeUInt32LE(sampleRate,24); h.writeUInt32LE(sampleRate*channels*2,28);
+  h.writeUInt16LE(channels*2,32); h.writeUInt16LE(16,34); h.write("data",36); h.writeUInt32LE(pcm.length,40);
+  return Buffer.concat([h,pcm]);
 }
-
-async function synthesizeKhmer(text, apiKey, outputPath) {
+async function makeSpeech(text, apiKey, outputPath) {
   const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
-    method: "POST",
-    headers: {
-      "x-goog-api-key": apiKey,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: TTS_MODEL,
-      input: [{
-        type: "user_input",
-        content: [{
-          type: "text",
-          text,
-          annotations: [{ type: "speech_metadata", style: "Natural, clear Khmer narration at a steady conversational pace." }]
-        }]
-      }],
-      response_format: { type: "audio" },
-      generation_config: { speech_config: [{ voice: TTS_VOICE }] }
+    method:"POST", headers:{"x-goog-api-key":apiKey,"Content-Type":"application/json"},
+    body:JSON.stringify({
+      model:MODEL,
+      input:"Speak the following Khmer text clearly and naturally in Khmer language. Do not translate or add words: "+text,
+      response_format:{type:"audio"},
+      generation_config:{speech_config:[{voice:VOICE}]}
     }),
-    signal: AbortSignal.timeout(120000)
+    signal:AbortSignal.timeout(120000)
   });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = payload.error?.message || payload.message || "Gemini TTS request failed";
-    throw new Error("Gemini TTS: " + detail);
-  }
-
-  const audio = payload.output_audio?.data ||
-    (payload.steps || [])
-      .filter(step => step.type === "model_output")
-      .flatMap(step => step.content || [])
-      .find(item => item.type === "audio" && item.data)?.data;
-
-  if (!audio) throw new Error("Gemini TTS មិនបានផ្ញើទិន្នន័យសំឡេងត្រឡប់មកទេ។");
-  const bytes = Buffer.from(audio, "base64");
-  if (bytes.length < 44 || bytes.subarray(0, 4).toString() !== "RIFF") {
-    throw new Error("ទម្រង់សំឡេងពី Gemini មិនមែនជា WAV ត្រឹមត្រូវទេ។");
-  }
-  await fs.writeFile(outputPath, bytes);
+  const data = await response.json().catch(()=>({}));
+  if(!response.ok) throw new Error("Gemini TTS ("+response.status+"): "+(data.error?.message||"មិនអាចបង្កើតសំឡេងបានទេ។"));
+  const encoded=data.output_audio?.data;
+  if(!encoded) throw new Error("Gemini មិនបានផ្ញើសំឡេងត្រឡប់មកទេ។");
+  const pcm=Buffer.from(encoded,"base64");
+  if(pcm.length<100) throw new Error("ទិន្នន័យសំឡេងពី Gemini មិនគ្រប់គ្រាន់ទេ។");
+  await fs.writeFile(outputPath,makeWav(pcm));
 }
+function update(job,values){Object.assign(job,values,{updatedAt:Date.now()});}
 
-async function processDubJob(job, videoBuffer, segments, apiKey) {
-  const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "tk-dub-"));
-  const inputPath = path.join(workDir, "source-video");
-  const outputPath = path.join(workDir, "TRANSLAT-KHMER-DUBBED.mp4");
-  try {
-    await fs.writeFile(inputPath, videoBuffer);
-    const probe = await run("ffprobe", [
-      "-v", "error", "-show_entries", "format=duration",
-      "-of", "default=noprint_wrappers=1:nokey=1", inputPath
-    ]);
-    const duration = Number(probe.stdout.trim());
-    if (!Number.isFinite(duration) || duration <= 0) throw new Error("មិនអាចអានរយៈពេលវីដេអូបានទេ។");
-
-    const normalized = segments.map(segment => ({
-      start: Math.max(0, Math.min(duration, Number(segment.start) || 0)),
-      text: String(segment.translation || segment.khmer || "").trim()
-    })).filter(segment => segment.text && segment.start < duration);
-
-    if (!normalized.length) throw new Error("មិនមានឃ្លាខ្មែរដែលអាចបង្កើតសំឡេងបានទេ។");
-
-    const audioPaths = [];
-    for (let i = 0; i < normalized.length; i++) {
-      const audioPath = path.join(workDir, "speech-" + String(i).padStart(3, "0") + ".wav");
-      await synthesizeKhmer(normalized[i].text, apiKey, audioPath);
-      audioPaths.push(audioPath);
-      const progress = 8 + Math.round(((i + 1) / normalized.length) * 72);
-      setJob(job, progress, `កំពុងបង្កើតសំឡេងខ្មែរ ${i + 1}/${normalized.length}`);
+async function runJob(job,videoBuffer,segments,apiKey){
+  const dir=await fs.mkdtemp(path.join(os.tmpdir(),"translat-khmer-dub-"));
+  try{
+    const input=path.join(dir,"input-video"),output=path.join(dir,"TRANSLAT-KHMER-DUBBED.mp4");
+    await fs.writeFile(input,videoBuffer);
+    const probeText=await run(ffprobe.path,["-v","error","-show_entries","format=duration:stream=codec_type","-of","json",input]);
+    const probe=JSON.parse(probeText),duration=Number(probe.format?.duration);
+    if(!Number.isFinite(duration)||duration<=0||!probe.streams?.some(s=>s.codec_type==="video")) throw new Error("មិនអាចអានរយៈពេល ឬ Video Stream របស់វីដេអូនេះបានទេ។");
+    const hasOriginalAudio=probe.streams.some(s=>s.codec_type==="audio");
+    const clean=segments.map(s=>({start:Math.max(0,Math.min(duration,Number(s.start)||0)),text:String(s.translation||s.khmer||"").trim()})).filter(s=>s.text&&s.start<duration);
+    if(!clean.length) throw new Error("មិនមានឃ្លាខ្មែរដែលអាចបង្កើតសំឡេងបានទេ។");
+    const audioFiles=[];
+    for(let i=0;i<clean.length;i++){
+      const audioFile=path.join(dir,"voice-"+i+".wav");
+      await makeSpeech(clean[i].text,apiKey,audioFile); audioFiles.push(audioFile);
+      update(job,{progress:5+Math.round(((i+1)/clean.length)*75),stage:"កំពុងបង្កើតសំឡេងខ្មែរ "+(i+1)+"/"+clean.length});
     }
-
-    setJob(job, 84, "កំពុងរៀបចំពេលវេលាសំឡេង និងបញ្ចូលទៅក្នុងវីដេអូ");
-    const args = ["-y", "-i", inputPath];
-    for (const audioPath of audioPaths) args.push("-i", audioPath);
-
-    const filters = audioPaths.map((_, i) => {
-      const delay = Math.round(normalized[i].start * 1000);
-      return `[${i + 1}:a]adelay=${delay}:all=1,aresample=48000[a${i}]`;
-    });
-    const mixInputs = audioPaths.map((_, i) => `[a${i}]`).join("");
-    filters.push(`${mixInputs}amix=inputs=${audioPaths.length}:duration=longest:dropout_transition=0:normalize=0,apad,atrim=duration=${duration.toFixed(3)}[aout]`);
-
-    args.push(
-      "-filter_complex", filters.join(";"),
-      "-map", "0:v:0", "-map", "[aout]",
-      "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
-      "-t", duration.toFixed(3), "-movflags", "+faststart",
-      "-f", "mp4", outputPath
-    );
-    await run("ffmpeg", args);
-    const stat = await fs.stat(outputPath);
-    if (stat.size < 1024) throw new Error("ឯកសារ MP4 ដែលបានបង្កើតមានទំហំមិនត្រឹមត្រូវទេ។");
-
-    setJob(job, 100, "រួចរាល់", { status: "completed", outputPath, outputSize: stat.size });
-    // Keep the output available briefly so the phone can download it after polling.
-    job.cleanupTimer = setTimeout(async () => {
-      await fs.rm(workDir, { recursive: true, force: true }).catch(() => {});
-      jobs.delete(job.id);
-    }, JOB_TTL_MS);
-  } catch (error) {
-    setJob(job, 100, "បរាជ័យ", { status: "failed", error: error.message || "បង្កើតវីដេអូមិនបានទេ។" });
-    await fs.rm(workDir, { recursive: true, force: true }).catch(() => {});
+    update(job,{progress:84,stage:"កំពុងបញ្ចូលសំឡេងខ្មែរទៅក្នុង MP4"});
+    const args=["-y","-i",input]; for(const file of audioFiles) args.push("-i",file);
+    const filters=[],labels=[];
+    audioFiles.forEach((_,i)=>{const label="v"+i;filters.push("["+(i+1)+":a]adelay="+Math.round(clean[i].start*1000)+":all=1,aresample=48000["+label+"]");labels.push("["+label+"]");});
+    if(hasOriginalAudio){
+      filters.push("[0:a]volume=0.18,aresample=48000[bg]");
+      filters.push(labels.join("")+"[bg]amix=inputs="+(labels.length+1)+":duration=longest:dropout_transition=0:normalize=0,apad,atrim=duration="+duration.toFixed(3)+"[aout]");
+    }else filters.push(labels.join("")+"amix=inputs="+labels.length+":duration=longest:dropout_transition=0:normalize=0,apad,atrim=duration="+duration.toFixed(3)+"[aout]");
+    args.push("-filter_complex",filters.join(";"),"-map","0:v:0","-map","[aout]","-c:v","copy","-c:a","aac","-b:a","192k","-t",duration.toFixed(3),"-movflags","+faststart","-f","mp4",output);
+    await run(ffmpegPath,args);
+    const stat=await fs.stat(output); if(stat.size<1024) throw new Error("ឯកសារ MP4 ដែលបានបង្កើតមិនត្រឹមត្រូវទេ។");
+    update(job,{status:"completed",progress:100,stage:"រួចរាល់",outputPath:output,outputSize:stat.size});
+    job.cleanupTimer=setTimeout(async()=>{await fs.rm(dir,{recursive:true,force:true}).catch(()=>{});jobs.delete(job.id);},JOB_TTL_MS);
+  }catch(error){
+    update(job,{status:"failed",progress:100,stage:"បរាជ័យ",error:error.message||"បង្កើតវីដេអូមិនបានទេ។"});
+    await fs.rm(dir,{recursive:true,force:true}).catch(()=>{});
   }
 }
-
-router.post("/api/dub", (req, res, next) => {
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(503).json({ ok: false, error: "Backend មិនទាន់កំណត់ GEMINI_API_KEY នៅ Render Environment ទេ។" });
-  }
-  next();
-}, (req, res, next) => {
-  // The upload middleware is attached by the parent server to preserve its configured file-size limit.
-  next();
-});
-
-export function createDubbingRouter(upload) {
-  router.post("/api/dub", upload.single("video"), (req, res) => {
-    try {
-      if (!req.file) return res.status(400).json({ ok: false, error: "សូមជ្រើសរើសវីដេអូ។" });
-      let segments;
-      try { segments = JSON.parse(req.body.segments || "[]"); }
-      catch { return res.status(400).json({ ok: false, error: "ទិន្នន័យ Subtitle មិនត្រឹមត្រូវទេ។" }); }
-      if (!Array.isArray(segments) || !segments.length || segments.length > MAX_SEGMENTS) {
-        return res.status(400).json({ ok: false, error: `ចំនួនឃ្លាត្រូវមានពី 1 ដល់ ${MAX_SEGMENTS}។` });
-      }
-      const id = crypto.randomUUID();
-      const job = { id, status: "processing", progress: 3, stage: "បានទទួលវីដេអូ និងកំពុងចាប់ផ្ដើម", createdAt: Date.now(), updatedAt: Date.now() };
-      jobs.set(id, job);
-      const buffer = req.file.buffer;
-      processDubJob(job, buffer, segments, process.env.GEMINI_API_KEY).catch(error => {
-        setJob(job, 100, "បរាជ័យ", { status: "failed", error: error.message });
-      });
-      res.status(202).json({ ok: true, jobId: id, statusUrl: `/api/dub/${id}` });
-    } catch (error) {
-      res.status(500).json({ ok: false, error: error.message || "មិនអាចចាប់ផ្ដើមការងារ Dubbing បានទេ។" });
-    }
+export function createDubbingRouter(upload){
+  const router=express.Router();
+  router.post("/api/dub",(req,res,next)=>{
+    if(!process.env.GEMINI_API_KEY) return res.status(503).json({ok:false,error:"Backend មិនទាន់កំណត់ GEMINI_API_KEY នៅ Render Environment ទេ។"});
+    next();
+  },upload.single("video"),(req,res)=>{
+    if(!req.file) return res.status(400).json({ok:false,error:"សូមជ្រើសរើសវីដេអូ។"});
+    let segments; try{segments=JSON.parse(req.body.segments||"[]");}catch{return res.status(400).json({ok:false,error:"ទិន្នន័យ Subtitle មិនត្រឹមត្រូវទេ។"});}
+    if(!Array.isArray(segments)||!segments.length||segments.length>MAX_SEGMENTS) return res.status(400).json({ok:false,error:"ចំនួនឃ្លាត្រូវមានពី 1 ដល់ "+MAX_SEGMENTS+"។"});
+    const id=crypto.randomUUID(),job={id,status:"processing",progress:2,stage:"បានទទួលវីដេអូ",createdAt:Date.now(),updatedAt:Date.now()};
+    jobs.set(id,job);
+    runJob(job,req.file.buffer,segments,process.env.GEMINI_API_KEY).catch(error=>update(job,{status:"failed",progress:100,stage:"បរាជ័យ",error:error.message}));
+    res.status(202).json({ok:true,jobId:id});
   });
-
-  router.get("/api/dub/:jobId", (req, res) => {
-    const job = jobs.get(req.params.jobId);
-    if (!job) return res.status(404).json({ ok: false, error: "រកមិនឃើញការងារនេះ ឬវាបានផុតកំណត់។" });
-    res.json({
-      ok: true,
-      jobId: job.id,
-      status: job.status,
-      progress: job.progress,
-      stage: job.stage,
-      error: job.error || undefined,
-      downloadUrl: job.status === "completed" ? `/api/dub/${job.id}/download` : undefined
-    });
+  router.get("/api/dub/:jobId",(req,res)=>{
+    const job=jobs.get(req.params.jobId);
+    if(!job) return res.status(404).json({ok:false,error:"រកមិនឃើញការងារនេះ ឬវាបានផុតកំណត់។"});
+    res.json({ok:true,jobId:job.id,status:job.status,progress:job.progress,stage:job.stage,error:job.error||undefined,downloadUrl:job.status==="completed"?"/api/dub/"+job.id+"/download":undefined});
   });
-
-  router.get("/api/dub/:jobId/download", async (req, res) => {
-    const job = jobs.get(req.params.jobId);
-    if (!job || job.status !== "completed" || !job.outputPath) {
-      return res.status(404).json({ ok: false, error: "វីដេអូមិនទាន់រួចរាល់ ឬការងារបានផុតកំណត់។" });
-    }
-    res.download(job.outputPath, "TRANSLAT-KHMER-DUBBED.mp4");
+  router.get("/api/dub/:jobId/download",(req,res)=>{
+    const job=jobs.get(req.params.jobId);
+    if(!job||job.status!=="completed"||!job.outputPath) return res.status(404).json({ok:false,error:"វីដេអូមិនទាន់រួចរាល់ ឬការងារបានផុតកំណត់។"});
+    res.download(job.outputPath,"TRANSLAT-KHMER-DUBBED.mp4");
   });
-
   return router;
 }
