@@ -32,24 +32,45 @@ function makeWav(pcm, sampleRate = 24000, channels = 1) {
   h.writeUInt16LE(channels*2,32); h.writeUInt16LE(16,34); h.write("data",36); h.writeUInt32LE(pcm.length,40);
   return Buffer.concat([h,pcm]);
 }
-async function makeSpeech(text, apiKey, outputPath) {
+export async function makeSpeech(text, apiKey, outputPath) {
+  const transcript = String(text || "").trim();
+  if (!transcript) throw new Error("មិនមានអត្ថបទខ្មែរសម្រាប់បង្កើតសំឡេងទេ។");
   const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
-    method:"POST", headers:{"x-goog-api-key":apiKey,"Content-Type":"application/json"},
-    body:JSON.stringify({
-      model:MODEL,
-      input:"Speak the following Khmer text clearly and naturally in Khmer language. Do not translate or add words: "+text,
-      response_format:{type:"audio"},
-      generation_config:{speech_config:[{voice:VOICE}]}
+    method: "POST",
+    headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL,
+      input: [{
+        type: "user_input",
+        content: [{
+          type: "text",
+          text: transcript,
+          annotations: [{
+            type: "speech_metadata",
+            style: "Natural, clear Khmer narration at a steady conversational pace."
+          }]
+        }]
+      }],
+      response_format: { type: "audio" },
+      generation_config: { speech_config: [{ voice: VOICE }] }
     }),
-    signal:AbortSignal.timeout(120000)
+    signal: AbortSignal.timeout(120000)
   });
-  const data = await response.json().catch(()=>({}));
-  if(!response.ok) throw new Error("Gemini TTS ("+response.status+"): "+(data.error?.message||"មិនអាចបង្កើតសំឡេងបានទេ។"));
-  const encoded=data.output_audio?.data;
-  if(!encoded) throw new Error("Gemini មិនបានផ្ញើសំឡេងត្រឡប់មកទេ។");
-  const pcm=Buffer.from(encoded,"base64");
-  if(pcm.length<100) throw new Error("ទិន្នន័យសំឡេងពី Gemini មិនគ្រប់គ្រាន់ទេ។");
-  await fs.writeFile(outputPath,makeWav(pcm));
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error("Gemini TTS (" + response.status + "): " +
+      (data.error?.message || "មិនអាចបង្កើតសំឡេងបានទេ។"));
+  }
+  const encoded = data.output_audio?.data;
+  if (!encoded) throw new Error("Gemini មិនបានផ្ញើសំឡេងត្រឡប់មកទេ។");
+  const wav = Buffer.from(encoded, "base64");
+  if (wav.length < 100 || wav.subarray(0, 4).toString() !== "RIFF" ||
+      wav.subarray(8, 12).toString() !== "WAVE") {
+    throw new Error("Gemini TTS មិនបានផ្ញើឯកសារ WAV ពេញលេញត្រឹមត្រូវទេ។");
+  }
+  // Gemini 3.8 TTS unary Interactions responses already include a 44-byte WAV header.
+  // Save the complete WAV as returned; do not wrap it in a second header.
+  await fs.writeFile(outputPath, wav);
 }
 function update(job,values){Object.assign(job,values,{updatedAt:Date.now()});}
 
