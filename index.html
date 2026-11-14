@@ -103,6 +103,7 @@ h2{color:#00f2fe}
 <footer>TRANSLAT KHMER NEW PRO · Version 1.4 · Language selection</footer>
 <script>
 const $=id=>document.getElementById(id);
+const DEFAULT_BACKEND_URL='https://translat-khmer-new-pro-api.onrender.com';
 loadSettings();
 async function translateText(){
  const input=$('original').value.trim(),lang=$('source').value,status=$('status'),btn=$('translateBtn');
@@ -120,8 +121,9 @@ async function translateText(){
  finally{btn.disabled=false;}
 }
 function saveKey(){
- const url=$('backendUrl').value.trim().replace(/\/+$/,'');
- if(url){localStorage.setItem('tk_new_pro_backend_url',url);}
+ const url=($('backendUrl').value.trim()||DEFAULT_BACKEND_URL).replace(/\/+$/,'');
+ $('backendUrl').value=url;
+ localStorage.setItem('tk_new_pro_backend_url',url);
  $('apiKey').value='';
  $('keyStatus').textContent='រក្សាទុក Backend URL រួច។ Gemini API Key ត្រូវកំណត់នៅ Render Environment ជា GEMINI_API_KEY ដើម្បីរក្សាសុវត្ថិភាព។';
 }
@@ -131,9 +133,9 @@ function clearKey(){
  $('keyStatus').textContent='កម្មវិធីមិនរក្សាទុក Gemini API Key លើទូរស័ព្ទទេ។ សូមគ្រប់គ្រង Key នៅ Render Environment។';
 }
 function loadSettings(){
- $('backendUrl').value=localStorage.getItem('tk_new_pro_backend_url')||'';
+ $('backendUrl').value=localStorage.getItem('tk_new_pro_backend_url')||DEFAULT_BACKEND_URL;
  $('apiKey').value='';
- $('keyStatus').textContent='Backend URL មិនទាន់បានកំណត់។ សូម Deploy Backend ថ្មីរបស់ TRANSLAT-KHMER-NEW-PRO ជាមុន។';
+ $('keyStatus').textContent='បានកំណត់ URL របស់ Backend ថ្មី (Render)។ សូមប្រាកដថា Service បាន Deploy និងមាន GEMINI_API_KEY នៅ Environment។';
 }
 function updateVideoProgress(percent,label,note){
  const panel=$('progressPanel');panel.style.display='block';
