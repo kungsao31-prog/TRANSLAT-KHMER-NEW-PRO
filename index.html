@@ -195,7 +195,7 @@ async function translateVideo(){
   if(!khmer)throw new Error('AI មិនបានបង្កើតអត្ថបទខ្មែរទេ។');
   const srt=segments.map((seg,i)=>(i+1)+'\n'+stamp(Number(seg.start)||0)+' --> '+stamp(Number(seg.end)||0)+'\n'+getKhmer(seg)).filter(x=>x.split('\n').length>=3).join('\n\n')+'\n';
   $('subtitle').value=srt;$('result').value=khmer;$('voiceText').value=khmer;
-  updateVideoProgress(100,'ស្គាល់សំឡេង និងបកប្រែបានរួច','បានបកប្រែ '+segments.length+' ឃ្លា។ ឥឡូវកំពុងបង្កើតសំឡេងខ្មែរ និងវីដេអូថ្មី។');
+  updateVideoProgress(42,'ជំហានទី ១/២៖ បកប្រែបានរួច','បានបកប្រែ '+segments.length+' ឃ្លា។ ឥឡូវកំពុងបង្កើតសំឡេងខ្មែរ និងវីដេអូថ្មី។');
   status.textContent='ជំហានទី ២/២៖ កំពុងបង្កើតសំឡេងខ្មែរ និងដាក់ចូលក្នុងវីដេអូ។';
   const dubForm=new FormData();
   dubForm.append('video',file);dubForm.append('segments',JSON.stringify(segments));
@@ -208,7 +208,7 @@ async function translateVideo(){
    const poll=await fetch(backend+'/api/dub/'+encodeURIComponent(accepted.jobId),{headers:{Accept:'application/json'}});
    const pollData=await poll.json().catch(()=>({}));
    if(!poll.ok||!pollData.ok)throw new Error(pollData.error||'មិនអាចពិនិត្យស្ថានភាពការងារបានទេ។');
-   job=pollData;updateVideoProgress(job.progress||2,job.stage||'កំពុងបង្កើតសំឡេងខ្មែរ','ស្ថានភាព៖ '+(job.stage||'កំពុងដំណើរការ'));
+   job=pollData;const realProgress=42+Math.round((Math.max(0,Math.min(100,Number(job.progress)||2))*0.58));updateVideoProgress(realProgress,job.stage||'កំពុងបង្កើតសំឡេងខ្មែរ','ជំហានទី ២/២ · ស្ថានភាព៖ '+(job.stage||'កំពុងដំណើរការ'));
    if(job.status==='completed')break;
    if(job.status==='failed')throw new Error(job.error||'បង្កើតសំឡេងខ្មែរមិនបានទេ។');
    await new Promise(resolve=>setTimeout(resolve,2000));
