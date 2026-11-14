@@ -12,7 +12,7 @@ import crypto from "node:crypto";
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
 const API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const MAX_VIDEO_MB = Number(process.env.MAX_VIDEO_MB || 80);
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "").split(",").map(x => x.trim()).filter(Boolean);
 
