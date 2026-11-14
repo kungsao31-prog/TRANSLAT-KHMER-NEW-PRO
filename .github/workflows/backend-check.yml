@@ -27,6 +27,9 @@ jobs:
         run: |
           node --check server.js
           node --check dubbing.js
+      - name: Run backend unit tests
+        working-directory: backend
+        run: npm test
       - name: Verify FFmpeg binaries
         working-directory: backend
         run: |
