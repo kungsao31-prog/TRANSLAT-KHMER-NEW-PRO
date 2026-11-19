@@ -156,6 +156,7 @@ async function runJob(job, videoBuffer, segments, visualTexts, apiKey) {
       height: Math.max(0, Math.min(1, Number(v.height) || 0)),
       text: String(v.translation || "").trim()
     })).filter(v => v.text && v.end > v.start && v.width > 0 && v.height > 0).slice(0, 120);
+    const videoFilters = [];
     if (visual.length) {
       const fontExists = await fs.access(KHMER_FONT).then(() => true).catch(() => false);
       if (!fontExists) throw new Error("មិនទាន់មានពុម្ពអក្សរខ្មែរនៅលើ Render ទេ។ សូមដំឡើង Noto Sans Khmer ឬកំណត់ KHMER_FONT_PATH។");
@@ -168,13 +169,14 @@ async function runJob(job, videoBuffer, segments, visualTexts, apiKey) {
         const y = "trunc(ih*" + v.y + ")";
         const w = "trunc(iw*" + v.width + ")";
         const h = "trunc(ih*" + v.height + ")";
-        filters.push("drawbox=x=" + x + ":y=" + y + ":w=" + w + ":h=" + h + ":color=black:t=fill:enable='between(t," + v.start.toFixed(3) + "," + v.end.toFixed(3) + ")'");
-        filters.push("drawtext=fontfile='" + esc(KHMER_FONT) + "':textfile='" + esc(textFile) + "':fontcolor=white:fontsize='max(16,ih*0.035)':x=" + x + "+8:y=" + y + "+max(0,(" + h + "-text_h)/2):box=0:enable='between(t," + v.start.toFixed(3) + "," + v.end.toFixed(3) + ")'");
+        videoFilters.push("drawbox=x=" + x + ":y=" + y + ":w=" + w + ":h=" + h + ":color=black:t=fill:enable='between(t," + v.start.toFixed(3) + "," + v.end.toFixed(3) + ")'");
+        videoFilters.push("drawtext=fontfile='" + esc(KHMER_FONT) + "':textfile='" + esc(textFile) + "':fontcolor=white:fontsize='max(16,ih*0.035)':x=" + x + "+8:y=" + y + "+max(0,(" + h + "-text_h)/2):box=0:enable='between(t," + v.start.toFixed(3) + "," + v.end.toFixed(3) + ")'");
       }
+      filters.push("[0:v]" + videoFilters.join(",") + "[vout]");
     }
     args.push(
       "-filter_complex", filters.join(";"),
-      "-map", "0:v:0",
+      "-map", visual.length ? "[vout]" : "0:v:0",
       "-map", "[aout]",
       "-c:v", visual.length ? "libx264" : "copy",
       ...(visual.length ? ["-preset", "veryfast", "-crf", "22"] : []),
