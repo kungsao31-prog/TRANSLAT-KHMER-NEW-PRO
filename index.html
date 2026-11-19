@@ -198,7 +198,7 @@ async function translateVideo(){
   updateVideoProgress(42,'ជំហានទី ១/២៖ បកប្រែបានរួច','បានបកប្រែ '+segments.length+' ឃ្លា។ ឥឡូវកំពុងបង្កើតសំឡេងខ្មែរ និងវីដេអូថ្មី។');
   status.textContent='ជំហានទី ២/២៖ កំពុងបង្កើតសំឡេងខ្មែរ និងដាក់ចូលក្នុងវីដេអូ។';
   const dubForm=new FormData();
-  dubForm.append('video',file);dubForm.append('segments',JSON.stringify(segments));
+  dubForm.append('video',file);dubForm.append('segments',JSON.stringify(segments));dubForm.append('visualTexts',JSON.stringify(Array.isArray(data.visualTexts)?data.visualTexts:[]));
   updateVideoProgress(2,'កំពុងផ្ញើទៅបង្កើតសំឡេងខ្មែរ','កំពុងចាប់ផ្ដើមការងារបង្កើតសំឡេង។');
   const acceptedText=await sendForm('/api/dub',dubForm,null);
   let accepted;try{accepted=JSON.parse(acceptedText||'{}');}catch(e){throw new Error('Backend មិនបានផ្ញើ Job ID ត្រឹមត្រូវទេ។');}
@@ -222,7 +222,7 @@ async function translateVideo(){
   const dubbedUrl=URL.createObjectURL(dubbedBlob);$('video').dataset.dubbedUrl=dubbedUrl;
   $('video').src=dubbedUrl;$('video').style.display='block';$('previewPlaceholder').style.display='none';$('video').load();
   const downloadLink=$('downloadDubbedLink');if(downloadLink){downloadLink.href=dubbedUrl;downloadLink.hidden=false;}
-  updateVideoProgress(100,'រួចរាល់ 100%','បានបង្កើត MP4 និងសំឡេងខ្មែរ '+segments.length+' ឃ្លា។');
+  updateVideoProgress(100,'រួចរាល់ 100%','បានបង្កើត MP4 មានសំឡេងខ្មែរ និងអក្សរខ្មែរជំនួសអក្សរចិន '+(Array.isArray(data.visualTexts)?data.visualTexts.length:0)+' កន្លែង។');
   status.textContent='ជោគជ័យ! វីដេអូថ្មីមានសំឡេងខ្មែរ។ ចុច Play ឬទាញយក MP4។';
   if($('videoKhmerVoiceToggle').checked)readKhmer(khmer);
  }catch(error){
