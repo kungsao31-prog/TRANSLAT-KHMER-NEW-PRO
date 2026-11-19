@@ -25,7 +25,8 @@ app.use(cors({
   }
 }));
 app.use(express.json({ limit: "1mb" }));
-// Apply rate limits only to expensive AI generation endpoints; do not throttle job polling or MP4 downloads.\nconst aiRateLimit = rateLimit({ windowMs: 60_000, limit: 8, standardHeaders: true, legacyHeaders: false });
+// Apply rate limits only to expensive AI generation endpoints; do not throttle job polling or MP4 downloads.
+const aiRateLimit = rateLimit({ windowMs: 60_000, limit: 8, standardHeaders: true, legacyHeaders: false });
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_VIDEO_MB * 1024 * 1024, files: 1 }
