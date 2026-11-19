@@ -88,7 +88,17 @@ Use seconds for timing. Preserve speaker IDs. Visual text boxes must tightly cov
         original: String(s.original || ""),
         translation: String(s.translation || s.khmer || "").trim()
       })).filter(s => s.translation && s.end >= s.start) : [];
-      res.json({ ok: true, segments });
+      const visualTexts = Array.isArray(parsed.visualTexts) ? parsed.visualTexts.map(v => ({
+        start: Math.max(0, Number(v.start) || 0),
+        end: Math.max(0, Number(v.end) || 0),
+        x: Math.max(0, Math.min(1, Number(v.x) || 0)),
+        y: Math.max(0, Math.min(1, Number(v.y) || 0)),
+        width: Math.max(0, Math.min(1, Number(v.width) || 0)),
+        height: Math.max(0, Math.min(1, Number(v.height) || 0)),
+        original: String(v.original || ""),
+        translation: String(v.translation || "").trim()
+      })).filter(v => v.translation && v.end > v.start && v.width > 0 && v.height > 0).slice(0, 120) : [];
+      res.json({ ok: true, segments, visualTexts });
     } finally {
       await fs.rm(tempPath, { force: true }).catch(() => {});
       if (uploadedName) await ai().files.delete({ name: uploadedName }).catch(() => {});
