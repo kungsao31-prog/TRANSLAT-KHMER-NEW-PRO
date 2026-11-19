@@ -64,7 +64,13 @@ app.post("/api/video/translate", upload.single("video"), async (req, res) => {
       }
       if (state !== "ACTIVE") throw new Error("Gemini មិនអាចត្រៀមឯកសារវីដេអូបានទេ។ សូមសាកល្បងវីដេអូខ្លីជាងនេះ។");
       const language = String(req.body.sourceLanguage || "auto").slice(0, 30);
-      const prompt = `Listen to the spoken dialogue in this video. Source language: ${language}. Transcribe and translate every spoken segment into natural Khmer. Return ONLY valid JSON with this exact shape: {"ok":true,"segments":[{"start":0.0,"end":2.5,"original":"spoken words","translation":"អត្ថបទខ្មែរ"}]}. Use seconds for start/end, preserve chronological order, do not invent dialogue, and keep segments short and time-aligned. If there is no speech return {"ok":true,"segments":[]}.`;
+      const prompt = `Listen carefully to the dialogue in this video. Source language: ${language}.
+Transcribe every spoken line and translate it into natural, complete, conversational Khmer.
+Identify speakers by their audible voice, not by names or visual appearance. Assign a stable speakerId ("speaker_1", "speaker_2", etc.) to each distinct voice and reuse that ID whenever the same person speaks again.
+For each speaker, classify the audible voice gender as exactly "female", "male", or "unknown". Do not guess when the voice is genuinely unclear.
+Return ONLY valid JSON in this exact shape:
+{"ok":true,"segments":[{"start":0.0,"end":2.5,"speakerId":"speaker_1","gender":"female","original":"spoken words","translation":"អត្ថបទខ្មែរ"}]}.
+Use seconds for start/end. Keep every line in chronological order, preserve speaker identity consistently, do not omit or invent dialogue, and keep each segment aligned to the original speech timing. Use short natural spoken Khmer sentences. If there is no speech return {"ok":true,"segments":[]}.`;
       const result = await client.models.generateContent({
         model: MODEL,
         contents: [createPartFromUri(current.uri, current.mimeType), prompt],
@@ -75,6 +81,8 @@ app.post("/api/video/translate", upload.single("video"), async (req, res) => {
       const segments = Array.isArray(parsed.segments) ? parsed.segments.map(s => ({
         start: Math.max(0, Number(s.start) || 0),
         end: Math.max(0, Number(s.end) || 0),
+        speakerId: String(s.speakerId || s.speaker || "speaker_1").slice(0, 40),
+        gender: ["female", "male"].includes(String(s.gender || "").toLowerCase()) ? String(s.gender).toLowerCase() : "unknown",
         original: String(s.original || ""),
         translation: String(s.translation || s.khmer || "").trim()
       })).filter(s => s.translation && s.end >= s.start) : [];
