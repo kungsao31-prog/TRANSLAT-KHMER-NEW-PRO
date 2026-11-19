@@ -85,7 +85,7 @@ export async function makeSpeech(text, apiKey, outputPath, voiceName = FALLBACK_
   if (audio.subarray(0, 4).toString() !== "RIFF" || audio.subarray(8, 12).toString() !== "WAVE") {
     // Gemini TTS commonly returns raw 16-bit little-endian PCM at 24 kHz mono.
     const mime = String(audioPart.inlineData.mimeType || "");
-    const rateMatch = mime.match(/rate=(\\d+)/i);
+    const rateMatch = mime.match(/rate=(\d+)/i);
     const sampleRate = rateMatch ? Number(rateMatch[1]) : 24000;
     const header = Buffer.alloc(44);
     header.write("RIFF", 0); header.writeUInt32LE(36 + audio.length, 4);
