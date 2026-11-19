@@ -6,6 +6,7 @@ import crypto from "node:crypto";
 import { spawn } from "node:child_process";
 import ffmpegPath from "ffmpeg-static";
 import ffprobe from "ffprobe-static";
+import { pathToFileURL } from "node:url";
 
 const jobs = new Map();
 const MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts";
@@ -14,6 +15,7 @@ const FEMALE_VOICES = ["Kore", "Aoede", "Callirrhoe", "Leda", "Zephyr", "Despina
 const MALE_VOICES = ["Puck", "Charon", "Fenrir", "Orus", "Achird", "Iapetus"];
 const MAX_SEGMENTS = 80;
 const JOB_TTL_MS = 30 * 60 * 1000;
+const KHMER_FONT = process.env.KHMER_FONT_PATH || "/usr/share/fonts/truetype/noto/NotoSansKhmer-Regular.ttf";
 
 function run(command, args) {
   return new Promise((resolve, reject) => {
@@ -97,7 +99,7 @@ export async function makeSpeech(text, apiKey, outputPath, voiceName = FALLBACK_
   await fs.writeFile(outputPath, wav);
 }
 
-async function runJob(job, videoBuffer, segments, apiKey) {
+async function runJob(job, videoBuffer, segments, visualTexts, apiKey) {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "translat-khmer-dub-"));
   try {
     const input = path.join(dir, "input-video");
@@ -145,11 +147,37 @@ async function runJob(job, videoBuffer, segments, apiKey) {
     filters.push(labels.join("") + "amix=inputs=" + labels.length +
       ":duration=longest:dropout_transition=0:normalize=0,apad,atrim=duration=" +
       duration.toFixed(3) + "[aout]");
+    const visual = (Array.isArray(visualTexts) ? visualTexts : []).map(v => ({
+      start: Math.max(0, Math.min(duration, Number(v.start) || 0)),
+      end: Math.max(0, Math.min(duration, Number(v.end) || 0)),
+      x: Math.max(0, Math.min(1, Number(v.x) || 0)),
+      y: Math.max(0, Math.min(1, Number(v.y) || 0)),
+      width: Math.max(0, Math.min(1, Number(v.width) || 0)),
+      height: Math.max(0, Math.min(1, Number(v.height) || 0)),
+      text: String(v.translation || "").trim()
+    })).filter(v => v.text && v.end > v.start && v.width > 0 && v.height > 0).slice(0, 120);
+    if (visual.length) {
+      const fontExists = await fs.access(KHMER_FONT).then(() => true).catch(() => false);
+      if (!fontExists) throw new Error("មិនទាន់មានពុម្ពអក្សរខ្មែរនៅលើ Render ទេ។ សូមដំឡើង Noto Sans Khmer ឬកំណត់ KHMER_FONT_PATH។");
+      const esc = value => String(value).replace(/\\/g, "\\\\").replace(/:/g, "\\:").replace(/'/g, "\\'").replace(/%/g, "\\%");
+      for (let i = 0; i < visual.length; i++) {
+        const v = visual[i];
+        const textFile = path.join(dir, "visual-" + i + ".txt");
+        await fs.writeFile(textFile, v.text, "utf8");
+        const x = "trunc(iw*" + v.x + ")";
+        const y = "trunc(ih*" + v.y + ")";
+        const w = "trunc(iw*" + v.width + ")";
+        const h = "trunc(ih*" + v.height + ")";
+        filters.push("drawbox=x=" + x + ":y=" + y + ":w=" + w + ":h=" + h + ":color=black:t=fill:enable='between(t," + v.start.toFixed(3) + "," + v.end.toFixed(3) + ")'");
+        filters.push("drawtext=fontfile='" + esc(KHMER_FONT) + "':textfile='" + esc(textFile) + "':fontcolor=white:fontsize='max(16,ih*0.035)':x=" + x + "+8:y=" + y + "+max(0,(" + h + "-text_h)/2):box=0:enable='between(t," + v.start.toFixed(3) + "," + v.end.toFixed(3) + ")'");
+      }
+    }
     args.push(
       "-filter_complex", filters.join(";"),
       "-map", "0:v:0",
       "-map", "[aout]",
-      "-c:v", "copy",
+      "-c:v", visual.length ? "libx264" : "copy",
+      ...(visual.length ? ["-preset", "veryfast", "-crf", "22"] : []),
       "-c:a", "aac",
       "-b:a", "192k",
       "-t", duration.toFixed(3),
@@ -174,23 +202,23 @@ async function runJob(job, videoBuffer, segments, apiKey) {
   }
 }
 
-export function createDubbingRouter(upload) {
+export function createDubbingRouter(upload, aiRateLimit) {
   const router = express.Router();
-  router.post("/api/dub", (req, res, next) => {
+  router.post("/api/dub", aiRateLimit, (req, res, next) => {
     if (!process.env.GEMINI_API_KEY) return res.status(503).json({ ok: false, error: "Backend មិនទាន់កំណត់ GEMINI_API_KEY នៅ Render Environment ទេ។" });
     next();
   }, upload.single("video"), (req, res) => {
     if (!req.file) return res.status(400).json({ ok: false, error: "សូមជ្រើសរើសវីដេអូ។" });
-    let segments;
-    try { segments = JSON.parse(req.body.segments || "[]"); }
+    let segments, visualTexts;
+    try { segments = JSON.parse(req.body.segments || "[]"); visualTexts = JSON.parse(req.body.visualTexts || "[]"); }
     catch { return res.status(400).json({ ok: false, error: "ទិន្នន័យ Subtitle មិនត្រឹមត្រូវទេ។" }); }
-    if (!Array.isArray(segments) || !segments.length || segments.length > MAX_SEGMENTS) {
+    if (!Array.isArray(segments) || !segments.length || segments.length > MAX_SEGMENTS || !Array.isArray(visualTexts) || visualTexts.length > 120) {
       return res.status(400).json({ ok: false, error: "ចំនួនឃ្លាត្រូវមានពី 1 ដល់ " + MAX_SEGMENTS + "។" });
     }
     const id = crypto.randomUUID();
     const job = { id, status: "processing", progress: 2, stage: "បានទទួលវីដេអូ", createdAt: Date.now(), updatedAt: Date.now() };
     jobs.set(id, job);
-    runJob(job, req.file.buffer, segments, process.env.GEMINI_API_KEY)
+    runJob(job, req.file.buffer, segments, visualTexts, process.env.GEMINI_API_KEY)
       .catch(error => update(job, { status: "failed", progress: 100, stage: "បរាជ័យ", error: error.message }));
     res.status(202).json({ ok: true, jobId: id });
   });
