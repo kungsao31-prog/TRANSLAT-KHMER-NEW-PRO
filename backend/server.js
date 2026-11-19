@@ -25,7 +25,7 @@ app.use(cors({
   }
 }));
 app.use(express.json({ limit: "1mb" }));
-app.use(rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false }));
+// Apply rate limits only to expensive AI generation endpoints; do not throttle job polling or MP4 downloads.\nconst aiRateLimit = rateLimit({ windowMs: 60_000, limit: 8, standardHeaders: true, legacyHeaders: false });
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_VIDEO_MB * 1024 * 1024, files: 1 }
@@ -38,7 +38,7 @@ const ai = () => {
 
 app.get("/health", (_req, res) => res.json({ ok: true, app: "TRANSLAT-KHMER-NEW-PRO", service: "new-independent-backend" }));
 
-app.post("/api/video/translate", upload.single("video"), async (req, res) => {
+app.post("/api/video/translate", aiRateLimit, upload.single("video"), async (req, res) => {
   let uploadedName;
   try {
     if (!req.file) return res.status(400).json({ ok: false, error: "សូមជ្រើសរើសឯកសារវីដេអូ។" });
@@ -97,7 +97,7 @@ Use seconds for start/end. Keep every line in chronological order, preserve spea
   }
 });
 
-app.use(createDubbingRouter(upload));
+app.use(createDubbingRouter(upload, aiRateLimit));
 
 app.use((err, _req, res, _next) => {
   const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
