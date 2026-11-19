@@ -75,12 +75,24 @@ export async function makeSpeech(text, apiKey, outputPath, voiceName = FALLBACK_
     throw new Error("Gemini TTS (" + response.status + "): " +
       (data.error?.message || "មិនអាចបង្កើតសំឡេងបានទេ។"));
   }
-  const encoded = data.candidates?.[0]?.content?.parts?.find(part => part.inlineData?.data)?.inlineData?.data;
-  if (!encoded) throw new Error("Gemini មិនបានផ្ញើសំឡេងត្រឡប់មកទេ។");
-  const wav = Buffer.from(encoded, "base64");
-  if (wav.length < 100 || wav.subarray(0, 4).toString() !== "RIFF" ||
-      wav.subarray(8, 12).toString() !== "WAVE") {
-    throw new Error("Gemini TTS មិនបានផ្ញើឯកសារ WAV ពេញលេញត្រឹមត្រូវទេ។");
+  const audioPart = data.candidates?.[0]?.content?.parts?.find(part => part.inlineData?.data);
+  if (!audioPart) throw new Error("Gemini មិនបានផ្ញើសំឡេងត្រឡប់មកទេ។");
+  const audio = Buffer.from(audioPart.inlineData.data, "base64");
+  if (audio.length < 100) throw new Error("សំឡេងដែល Gemini បង្កើតមានទំហំមិនត្រឹមត្រូវទេ។");
+  let wav = audio;
+  if (audio.subarray(0, 4).toString() !== "RIFF" || audio.subarray(8, 12).toString() !== "WAVE") {
+    // Gemini TTS commonly returns raw 16-bit little-endian PCM at 24 kHz mono.
+    const mime = String(audioPart.inlineData.mimeType || "");
+    const rateMatch = mime.match(/rate=(\\d+)/i);
+    const sampleRate = rateMatch ? Number(rateMatch[1]) : 24000;
+    const header = Buffer.alloc(44);
+    header.write("RIFF", 0); header.writeUInt32LE(36 + audio.length, 4);
+    header.write("WAVE", 8); header.write("fmt ", 12); header.writeUInt32LE(16, 16);
+    header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22);
+    header.writeUInt32LE(sampleRate, 24); header.writeUInt32LE(sampleRate * 2, 28);
+    header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34);
+    header.write("data", 36); header.writeUInt32LE(audio.length, 40);
+    wav = Buffer.concat([header, audio]);
   }
   await fs.writeFile(outputPath, wav);
 }
