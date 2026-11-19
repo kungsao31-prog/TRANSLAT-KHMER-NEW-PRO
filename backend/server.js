@@ -69,9 +69,10 @@ app.post("/api/video/translate", aiRateLimit, upload.single("video"), async (req
 Transcribe every spoken line and translate it into natural, complete, conversational Khmer.
 Identify speakers by their audible voice, not by names or visual appearance. Assign a stable speakerId ("speaker_1", "speaker_2", etc.) to each distinct voice and reuse that ID whenever the same person speaks again.
 For each speaker, classify the audible voice gender as exactly "female", "male", or "unknown". Do not guess when the voice is genuinely unclear.
-Return ONLY valid JSON in this exact shape:
-{"ok":true,"segments":[{"start":0.0,"end":2.5,"speakerId":"speaker_1","gender":"female","original":"spoken words","translation":"អត្ថបទខ្មែរ"}]}.
-Use seconds for start/end. Keep every line in chronological order, preserve speaker identity consistently, do not omit or invent dialogue, and keep each segment aligned to the original speech timing. Use short natural spoken Khmer sentences. If there is no speech return {"ok":true,"segments":[]}.`;
+Also inspect visible on-screen Chinese text (burned-in subtitles, labels, signs). For each visible text region, detect its time range and bounding box as normalized x,y,width,height coordinates from 0 to 1 relative to the full frame, and translate it into Khmer. Do not confuse scene objects or spoken dialogue with visible text.
+Return ONLY valid JSON in this shape:
+{"ok":true,"segments":[{"start":0.0,"end":2.5,"speakerId":"speaker_1","gender":"female","original":"spoken words","translation":"អត្ថបទខ្មែរ"}],"visualTexts":[{"start":0.0,"end":2.5,"x":0.1,"y":0.82,"width":0.8,"height":0.1,"original":"中文","translation":"អត្ថបទខ្មែរ"}]}.
+Use seconds for timing. Preserve speaker IDs. Visual text boxes must tightly cover Chinese text and only while visible. Use concise natural Khmer. Return empty arrays when absent.`;
       const result = await client.models.generateContent({
         model: MODEL,
         contents: [createPartFromUri(current.uri, current.mimeType), prompt],
